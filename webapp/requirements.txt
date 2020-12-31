@@ -1,0 +1,11 @@
+alembic
+click
+dominate
+Flask
+Jinja2
+Mako
+MarkupSafe
+python-dateutil
+python-editor
+requests
+six

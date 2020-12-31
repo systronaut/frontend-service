@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10">
+                <div class="jumbotron">
+                    <h2>
+                        SYSTRONAUT
+                    </h2>
+                    <h4>
+                        >> preseed/kickstart config generator
+                    </h4>
+                </div>
+
+                <div class="btn-group">
+                    <form action="/api/generate" name="selectType" method="get">
+                        <a class="btn btn-primary" type="submit" name="autoGenerate" value="windows" href="{{ url_for('windows', conf_name='2008R2', level='encrypt')}}">
+                            <em class="glyphicon"></em> Windows/Server/2008R2
+                        </a>
+
+                        <a class="btn btn-primary" type="submit" name="autoGenerate" value="windows" href="{{ url_for('windows', conf_name='2012R2', level='encrypt')}}">
+                            <em class="glyphicon"></em> Windows/Server/2016
+                        </a>
+
+                        <a class="btn btn-primary" type="submit" name="autoGenerate" value="windows" href="{{ url_for('windows', conf_name='2016', level='encrypt')}}">
+                            <em class="glyphicon"></em> Windows/Server/2016
+                        </a>
+
+                        <a class="btn btn-primary" type="submit" name="autoGenerate" value="windows" href="{{ url_for('windows', conf_name='2019', level='encrypt')}}">
+                            <em class="glyphicon"></em> Windows/Server/2019
+                        </a>
+
+                        <a class="btn btn-primary" type="submit" name="autoGenerate" value="debian" href="{{ url_for('debian', conf_name='buster', level='easy' ) }}" >
+                            <em class="glyphicon"></em> Debian/10/2(easy)
+                        </a>
+
+                        <button class="btn btn-primary" type="submit" name="autoGenerate" value="centos">
+                            <em class="glyphicon"></em> CentOS/8
+                        </button>
+                        <br>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+
+

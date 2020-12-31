@@ -1,0 +1,4 @@
+click
+Flask
+Jinja2
+flask-cors

@@ -1,0 +1,365 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="de-de" xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="description" content="Managed DNSMasq">
+        <meta name="author" content="iDustBin">
+        <title>OSaaS.Cloud Managed DNSMasq</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+        <link href="/static/css/bootstrap-responsive.min.css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="span10">
+                    <h4>MAC-Filtering</h4>
+                    <div class="pull-right">
+                        <input type="button" class="btn btn-primary" value="add rule" onclick="show_add();">
+                        <input type="button" class="btn btn-warning" value="refresh configuration" onclick="reload_dhcp('normal')">
+                    </div><br /><br />
+
+                    <div class="stepwizard display_no" id="stepwizard">
+                        <div class="stepwizard-row setup-panel">
+                            <div class="stepwizard-step">
+                                <a href="#step-1" type="button" class="btn btn-primary btn-circle">1</a>
+                                <p>Step 1</p>
+                            </div>
+                            <div class="stepwizard-step">
+                                <a href="#step-2" type="button" class="btn btn-default btn-circle" disabled="disabled">2</a>
+                                <p>Step 2</p>
+                            </div>
+                            <div class="stepwizard-step">
+                                <a href="#step-3" type="button" class="btn btn-default btn-circle" disabled="disabled">3</a>
+                                <p>Step 3</p>
+                            </div>
+                            <div class="stepwizard-step">
+                                <a href="#step-4" type="button" class="btn btn-default btn-circle" disabled="disabled">4</a>
+                                <p>Step 4</p>
+                            </div>
+                        </div>
+                    </div>
+                    <form class="form-horizontal display_no" id="add_line" method="post">
+                        <div class="row setup-content" id="step-1">
+                            <div class="col-xs-12">
+                                <div class="col-md-12">
+                                    <h3> Step 1</h3>
+                                    <div class="form-group">
+                                        <label class="control-label">Hostname</label>
+                                        <input  id="hostname" maxlength="100" type="text" required="required" class="form-control" placeholder="app01"  />
+                                    </div>
+                                    <div class="form-group">
+                                        <tr>
+                                            <label class="control-label" required="required">Domain/Zone</label>
+                                            <select id="domain" name="domain" class="form-control" required>
+                                                <option value="local.home">local.home 192.168.1.1/24</option>
+                                                <option value="fritz.box">fritz.box 192.168.10.1/24</option>
+                                            </select>
+                                            </td>
+                                        </tr>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label">IP-Address</label>
+                                        <input id="ip-address" maxlength="100" type="text" required="required" class="form-control" placeholder="192.168.1.10" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label">MAC-Address</label>
+                                        <input id="mac-address" maxlength="100" type="text" required="required" class="form-control" placeholder="00:0A:95:9D:68:16" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label">Lease_Time</label>
+                                        <input id="lease" maxlength="100" type="text" required="required" class="form-control" placeholder="72h" />
+                                    </div>
+                                    <button class="btn btn-primary nextBtn btn-lg pull-right" type="submit" onclick="add_dhcp_host()"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row setup-content" id="step-2">
+                            <div class="col-xs-12">
+                                <div class="col-md-12">
+                                    <h3> Step 2</h3>
+                                    <div class="form-group">
+                                        <tr>
+                                            <label class="control-label" required="required">Operating System</label>
+                                            <select id="domain" name="domain" class="form-control" required>
+                                                <option value="Debian">Debian</option>
+                                                <option value="CentOS">CentOS</option>
+                                            </select>
+                                            </td>
+                                        </tr>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label">Version</label>
+                                        <input maxlength="200" type="text" required="required" class="form-control" placeholder="Version"  />
+                                    </div>
+                                    <button class="btn btn-default prevBtn btn-lg pull-left" type="button" >Prev</button>
+                                    <button class="btn btn-success btn-lg pull-right" type="submit" onclick="add_dhcp_host()">Next</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row setup-content" id="step-3">
+                            <div class="col-xs-12">
+                                <div class="col-md-12">
+                                    <h3> Step 3</h3>
+                                    <div class="form-group">
+                                        <label class="control-label">Skills</label>
+                                        <input maxlength="200" type="text" required="required" class="form-control" placeholder="Enter skill or skills" />
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="control-label">Comment</label>
+                                        <textarea class="form-control" placeholder="Enter Comment" ></textarea>
+                                    </div>
+                                    <button class="btn btn-default prevBtn btn-lg pull-left" type="button" >Prev</button>
+                                    <button class="btn btn-primary nextBtn btn-lg pull-right" type="button" >Next</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row setup-content" id="step-4">
+                            <div class="col-xs-12">
+                                <div class="col-md-12">
+                                    <h3> Step 4</h3>
+                                    <button class="btn btn-default prevBtn btn-lg pull-left" type="button" >Prev</button>
+                                    <button class="btn btn-success btn-lg pull-right" type="submit">Finish!</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <table id="DataList" class="table table-bordered table-striped table-hover table-condensed">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="checkbox_all"> #</th>
+                                <th>MAC Address</th>
+                                <th>Host Name</th>
+                                <th>IP Address</th>
+                                <th>Lease</th>
+                                <th>Operating</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for d in dhcp_hosts %}
+                            <td><input type="checkbox"/> {{ loop.index }}</td>
+                            <td>{{ d[0] }}</td>
+                            <td>{{ d[1] }}</td>
+                            <td>{{ d[2] }}</td>
+                            <td>{{ d[3] or '' }}</td>
+                            <td>
+                                <a href="javascript:void(0);" onclick="to_edit({{d[1]}})">Edit</a> |
+                                <a href="/public/api?module=dhcp_host&fun=ch_status&id={{loop.index}}&value={{fun_value}}" onclick="return confirm('confirm {{st_msg}} the recording？');">{{st_msg}}</a> |
+                                <a href="javascript:void(0);" onclick="to_delete({{loop.index}})">Delete</a>
+                            </td>
+                            </tr>
+                            {# Editable status #}
+                            <tr id="edit_line_{{d[1]}}" class="display_no">
+                                <td><input type="checkbox"/> {{ loop.index }}</td>
+                                <td><input type="text" class="input-medium" value="{{d[1]}}" name="hostname_{{d[1]}}" id="hostname_{{d[1]}}"></td>
+                                <td><input type="text" class="input-medium" value="{{d[0]}}" name="mac_{{d[0]}}" id="mac_{{d[0]}}"></td>
+                                <td><input type="text" class="input-medium" value="{{d[2]}}" name="ip_{{d[2]}}" id="ip_{{d[2]}}"></td>
+                                <td><input type="text" class="input-medium" value="{{d[3]}}" name="lease_{{d[3]}}" id="os_{{d[3]}}"></td>
+                                <td>
+                                    <a href="javascript:void(0);" onclick="save_info({{loop.index}}, {{d[1]}});">Save</a> |
+                                    <a href="javascript:void(0);" onclick="to_line({{d[1]}})">Cancel</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="/static/js/bootstrap.min.js"></script>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js'>
+        </script>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                var navListItems = $('div.setup-panel div a'),
+                        allWells = $('.setup-content'),
+                        allNextBtn = $('.nextBtn'),
+                        allPrevBtn = $('.prevBtn');
+
+                allWells.hide();
+
+                navListItems.click(function (e) {
+                    e.preventDefault();
+                    var $target = $($(this).attr('href')),
+                            $item = $(this);
+
+                    if (!$item.hasClass('disabled')) {
+                        navListItems.removeClass('btn-primary').addClass('btn-default');
+                        $item.addClass('btn-primary');
+                        allWells.hide();
+                        $target.show();
+                        $target.find('input:eq(0)').focus();
+                    }
+                });
+
+                allNextBtn.click(function(){
+                    var curStep = $(this).closest(".setup-content"),
+                        curStepBtn = curStep.attr("id"),
+                        nextStepWizard = $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().next().children("a"),
+                        curInputs = curStep.find("input[type='text'],input[type='url']"),
+                        isValid = true;
+
+                    $(".form-group").removeClass("has-error");
+                    for(var i=0; curInputs.length; i++){
+                        if (!curInputs[i].validity.valid){
+                            isValid = false;
+                            $(curInputs[i]).closest(".form-group").addClass("has-error");
+                        }
+                    }
+
+                    if (isValid)
+                        nextStepWizard.removeAttr('disabled').trigger('click');
+            });
+
+            allPrevBtn.click(function(){
+                var curStep = $(this).closest(".setup-content"),
+                    curStepBtn = curStep.attr("id"),
+                    prevStepWizard = $('div.setup-panel div a[href="#' + curStepBtn + '"]').parent().prev().children("a");
+
+                $(".form-group").removeClass("has-error");
+                prevStepWizard.removeAttr('disabled').trigger('click');
+            });
+
+            $('div.setup-panel div a.btn-primary').trigger('click');
+        });
+        </script>
+        <script type="text/javascript">
+            function add_dhcp_host() {
+                hostname = $("#hostname").val();
+                mac = $("#mac-address").val();
+                ip = $("#ip-address").val();
+                lease = $("#lease").val();
+                domain = $("#domain").val();
+                if ( mac == '') {
+                    alert("Please enter MAC address！");
+                    $("#mac-address").focus();
+                    return false;
+                };
+                if ( ip == '') {
+                    alert("Please enter IP address！");
+                    $("#ip-address").focus();
+                    return false;
+                };
+                $.ajax({
+                    type: "POST",
+                    url: "http://localhost:8081/api/dnsmasq/add/host",
+                    data: JSON.stringify({ 'hostname':hostname, 'mac':mac, 'ip':ip, 'lease':lease, 'fun': 'add' }),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function(res){
+                        console.log('message', res.message);
+                        if (res.message == "1") {
+                            alert("Added successfully！");
+                            window.location.href="/dhcp/host";
+                        } else if (res.message == "2") {
+                            alert("MAC address already exists！");
+                            $("#mac").focus();
+                            return false;
+                        } else if (res.message == "3") {
+                            alert("IP address already exists！");
+                            $("#ip").focus();
+                            return false;
+                        } else {
+                            alert("Error:  Internal server error");
+                            return false;
+                        }
+                        },
+                    error:function(){
+                        alert("Error:  Internal server error");
+                        return false;
+                        },
+                    });
+            };
+            function show_add(){
+                $("#add_line").removeClass("display_no");
+                $("#stepwizard").removeClass("display_no");
+                $("#DataList").addClass("display_no");
+                $("#hostname").focus();
+            };
+            function cancel_add(){
+                $("#add_line").addClass("display_no");
+                $("#stepwizard").addClass("display_no");
+                $("#DataList").removeClass("display_no");
+            };
+            function to_edit(hostname){
+                show_id = "#line_" + hostname;
+                edit_id = "#edit_line_" + hostname;
+                $(show_id).addClass("display_no");
+                $(edit_id).removeClass("display_no");
+            };
+            function to_line(hostname){
+                show_id = "#line_" + hostname;
+                edit_id = "#edit_line_" + hostname;
+                $(show_id).removeClass("display_no");
+                $(edit_id).addClass("display_no");
+            };
+            /* Edit save record */
+            function save_info(id, hostname){
+                hostname = $("#hostname_"+hostname).val();
+                mac = $("#mac_"+hostname).val();
+                ip = $("#ip_"+hostname).val();
+                lease = $("#lease"+hostname).val();
+                $.ajax({
+                    type: "POST",
+                    url: "http://localhost:8081/api/dnsmasq/add/host",
+                    data: JSON.stringify({ "id":id, "hostname":hostname, "mac":mac, "ip":ip, "lease":lease, "fun":"edit" }),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function(res){
+                        if (res.message == "1") {
+                            alert("Successfully modified！");
+                            location.href="/dhcp/host";
+                        } else if (res.message == "2") {
+                            alert("MAC address already exists！");
+                            $("#mac_"+id).focus();
+                            return false;
+                        } else if (res.message == "3") {
+                            alert("IP address already exists！");
+                            $("#ip_"+ip).focus();
+                            return false;
+                        } else {
+                            alert("Error: modify failed！");
+                            return false;
+                        }
+                        },
+                    error:function(){
+                        alert("Error:  Internal server error");
+                        return false;
+                        },
+                    });
+            };
+            function to_delete(id){
+                $.ajax({
+                    type: "POST",
+                    url: "/dhcp/host",
+                    data: JSON.stringify({ "id":id, "fun":"delete" }),
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: function(res){
+                        if (res.message == "1") {
+                            alert("Successfully deleted！");
+                            location.href="/dhcp/host";
+                        } else if (res.message == "2") {
+                            alert("MAC address already exists！");
+                            $("#mac_"+id).focus();
+                            return false;
+                        } else if (res.message == "3") {
+                            alert("IP address already exists！");
+                            $("#ip_"+ip).focus();
+                            return false;
+                        } else {
+                            alert("Error: modify failed！");
+                            return false;
+                        }
+                        },
+                    error:function(){
+                        alert("Error:  Internal server error");
+                        return false;
+                        },
+                    });
+            };
+        </script>
+    </body>
+</html>

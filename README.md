@@ -1,2 +1,5 @@
-# frontend-service
-customer frontend service &amp; managed dnsmasq
+Dockerized:
+
+* docker-compose up --build
+
+***

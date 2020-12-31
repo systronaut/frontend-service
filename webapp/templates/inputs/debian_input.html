@@ -1,0 +1,688 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h2>Configuration: {{ level }}</h2>
+                <h2>Configuration: {{ conf_name }}</h2>
+                <h2>Language: {{ language }}</h2>
+            </div>
+            <div class="col-md-10">
+                <form method="post" name="typeDebian" action="http://localhost:8080/api/generate/debian/server/{{ conf_name }}/{{ level }}/">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Key</th>
+                            <th>Value</th>
+                        </tr>
+                        </thead>
+                        <tr>
+                            <td>1</td>
+                            <td class="select">locale</td>
+                            <td ALIGN="left">
+                                <select name="locale" class="form-control" required>
+                                    <option value="en_US.UTF-8">en_US.UTF-8</option>
+                                    <option value="de_DE.UTF-8">de_DE.UTF-8</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td class="select">language</td>
+                            <td ALIGN="left">
+                                <select name="language" class="form-control" required>
+                                    <option value="en">en</option>
+                                    <option value="de">de</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td class="select">country</td>
+                            <td ALIGN="left">
+                                <select name="country" class="form-control" required>
+                                    <option value="EN">EN</option>
+                                    <option value="DE">DE</option>
+                                </select>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>4</td>
+                            <td>multi locale</td>
+                            <td>
+                                <label><input type="radio" name="multi_locale" value="true">Yes</label>
+                                <label><input type="radio" name="multi_locale" value="false" checked>No</label>
+                            </td>
+                        </tr>
+
+                        <tr>
+                        <td>5</td>
+                            <td>Multi Language</td>
+                            <td>
+                            <select class="selectpicker" name="multi_language_environment" multiple data-live-search="true">
+                                <option value="de_DE.UTF-8">de_DE.UTF-8</option>
+                                <option value="en_US.UTF-8">en_US.UTF-8</option>
+                                <option value="en_GB.UTF-8">en_GB.UTF-8</option>
+                            </select>
+                        </td>
+                        </tr>
+
+                        <tr>
+                            <td>4</td>
+                            <td>allow-unauthenticated</td>
+                            <td>
+                                <label><input type="radio" name="allow_unauthenticated" value="true" checked>Yes</label>
+                                <label><input type="radio" name="allow_unauthenticated" value="false">No</label>
+                            </td>
+                        </tr>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Keyboard & Country</th>
+                            <th>Value</th>
+                        </tr>
+                        </thead>
+                        <tr>
+                            <td>5</td>
+                            <td class="select">xkb-keymap</td>
+                            <td ALIGN="left">
+                                <select name="xkb_keymap" class="form-control">
+                                    <option value="de">de</option>
+                                    <option value="en">en</option>
+                                </select>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>6</td>
+                            <td class="select">language_name_fb</td>
+                            <td ALIGN="left">
+                                <select name="language_name_fb" class="form-control">
+                                    <option value="German">German</option>
+                                    <option value="English">English</option>
+                                </select>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>7</td>
+                            <td class="select">country_name</td>
+                            <td ALIGN="left">
+                                <select name="country_name" class="form-control">
+                                    <option value="Germany">Germany</option>
+                                    <option value="English">English</option>
+                                </select>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>8</td>
+                            <td class="select">layoutcode</td>
+                            <td ALIGN="left">
+                                <select name="layoutcode" class="form-control">
+                                    <option value="de_DE">de_DE</option>
+                                    <option value="en_US">en_US</option>
+                                </select>
+                            </td>
+                        </tr>
+
+                        #multiselect area
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Network Settings</th>
+                            <th>Value</th>
+                        </tr>
+                        </thead>
+                        <tr>
+                            <td>9</td>
+                            <td class="select">choose_interface</td>
+                            <td ALIGN="left">
+                                <select name="choose_interface" class="form-control">
+                                    <option value="auto">auto</option>
+                                    <option value="eth0">eth0</option>
+                                    <option value="enps0">enps0</option>
+                                    <option value="loflo">loflo</option>
+                                </select>
+                            </td>
+                        </tr>
+
+                         <tr>
+                            <td>10</td>
+                            <td>ipv4 static configuration</td>
+                            <td>
+                                <label><input type="radio" name="ipv4" value="true">Yes</label>
+                                <label><input type="radio" name="ipv4" value="false" checked>No</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>11</td>
+                            <td>ipv4 address</td>
+                            <td><input name="ipv4_address" class="form-control" placeholder="192.168.10.111"
+                                       maxlength="16" size="16" style="display: none">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>12</td>
+                            <td>ipv4 netmask</td>
+                            <td><input name="ipv4_netmask" class="form-control" placeholder="255.255.255.0"
+                                       maxlength="10" size="20" style="display: none">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>13</td>
+                            <td>ipv4 gateway</td>
+                            <td><input name="ipv4_gateway" class="form-control" placeholder="192.168.10.1"
+                                       maxlength="10" size="20" style="display: none">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>14</td>
+                            <td>dns server</td>
+                            <td><input name="ipv4_nameserver" class="form-control" placeholder="192.168.10.1"
+                                       maxlength="10" size="20" style="display: none">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>10</td>
+                            <td>dhcp_timeout</td>
+                            <td><input name="dhcp_timeout" class="form-control" type="number" placeholder="60"></td>
+                        </tr>
+                        <tr>
+                            <td>11</td>
+                            <td>dhcpv6_timeout</td>
+                            <td><input name="dhcpv6_timeout" class="form-control" type="number" placeholder="0"></td>
+                        </tr>
+                       <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Hostname & </th>
+                            <th>Value</th>
+                        </tr>
+                        </thead>
+                        <tr>
+                            <td>12</td>
+                            <td>get_hostname</td>
+                            <td><input name="get_hostname" class="form-control" type="text" placeholder="intial"
+                                       maxlength="10" size="20"></td>
+                        </tr>
+                        <tr>
+                            <td>13</td>
+                            <td>get_domain</td>
+                            <td><input name="get_domain" class="form-control" type="text" placeholder="fritz.box"
+                                       maxlength="10" size="20"></td>
+                        </tr>
+
+                        <tr>
+                            <td>14</td>
+                            <td>root_login</td>
+                            <td>
+                                <label><input type="radio" name="root_login" value="true" checked>Yes</label>
+                                <label><input type="radio" name="root_login" value="false">No</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>15</td>
+                            <td>make_user</td>
+                            <td>
+                                <label><input type="radio" name="make_user" value="true" checked>Yes</label>
+                                <label><input type="radio" name="make_user" value="false">No</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>16</td>
+                            <td>root-password</td>
+                            <td><input name="root_password" class="form-control" type="text" placeholder="passw0rd"
+                                       maxlength="10" size="20"></td>
+                        </tr>
+                        <tr>
+                            <td>17</td>
+                            <td>root-password-again</td>
+                            <td><input name="root_password_again" class="form-control" type="text"
+                                       placeholder="passw0rd" maxlength="10" size="20"></td>
+                        </tr>
+                        <tr>
+                            <td>18</td>
+                            <td>allow-password-weak</td>
+                            <td>
+                                <label><input type="radio" name="allow_password_weak" value="true" checked>Yes</label>
+                                <label><input type="radio" name="allow_password_weak" value="false">No</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>19</td>
+                            <td>encrypt-home</td>
+                            <td>
+                                <label><input type="radio" name="encrypt_home" value="true" checked>Yes</label>
+                                <label><input type="radio" name="encrypt_home" value="false">No</label>
+                            </td>
+                        </tr>
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Clock & Timezone</th>
+                            <th>Value</th>
+                        </tr>
+                        </thead>
+                        <tr>
+                            <td>20</td>
+                            <td>clock-setup</td>
+                            <td><input name="clock_setup" class="form-control" type="text" placeholder="utc"
+                                       maxlength="10" size="20"></td>
+                        </tr>
+                        <tr>
+                            <td>21</td>
+                            <td>time-zone</td>
+                            <td><input name="time_zone" class="form-control" type="text" placeholder="EU/Berlin"
+                                       maxlength="10" size="20"></td>
+                        </tr>
+                        <tr>
+                            <td>22</td>
+                            <td>ntp</td>
+                            <td>
+                                <label><input type="radio" name="ntp" value="true">Yes</label>
+                                <label><input type="radio" name="ntp" value="false" checked>No</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>23</td>
+                            <td>ntp-server</td>
+                            <td><input name="ntp_server_address" class="form-control" placeholder="0.pool.ntp.org"
+                                       maxlength="10" size="20" style="display: none"></td>
+                        </tr>
+
+                        <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Parted</th>
+                            <th>Value</th>
+                        </tr>
+                        </thead>
+
+                        <tr>
+                            <td>24</td>
+                            <td>device_remove_lvm_span</td>
+                            <td>
+                                <label><input type="radio" name="device_remove_lvm_span" value="true"
+                                              checked>Yes</label>
+                                <label><input type="radio" name="device_remove_lvm_span" value="false">No</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>25</td>
+                            <td>purge_lvm_from_device</td>
+                            <td>
+                                <label><input type="radio" name="purge_lvm_from_device" value="true" checked>Yes</label>
+                                <label><input type="radio" name="purge_lvm_from_device" value="false">No</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>26</td>
+                            <td class="select">method</td>
+                            <td ALIGN="left">
+                                <select name="partman_lvm_method" class="form-control">
+                                    <option value="yes">lvm</option>
+                                    <option value="regular">regular</option>
+                                    <option value="crypted">crypted</option>
+                                    <option value="xfs">xfs</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr></tr>
+                        <tr>
+                            <td>27</td>
+                            <td>device_remove_lvm</td>
+                            <td>
+                                <label><input type="radio" name="device_remove_lvm" value="true" checked>Yes</label>
+                                <label><input type="radio" name="device_remove_lvm" value="false">No</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>28</td>
+                            <td>device_remove_md</td>
+                            <td>
+                                <label><input type="radio" name="device_remove_md" value="true" checked>Yes</label>
+                                <label><input type="radio" name="device_remove_md" value="false">No</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>29</td>
+                            <td>confirm</td>
+                            <td>
+                                <label><input type="radio" name="confirm" value="true" checked>Yes</label>
+                                <label><input type="radio" name="confirm" value="false">No</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>30</td>
+                            <td>confirm_nooverwrite</td>
+                            <td>
+                                <label><input type="radio" name="confirm_nooverwrite" value="true" checked>Yes</label>
+                                <label><input type="radio" name="confirm_nooverwrite" value="false">No</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>31</td>
+                            <td>no_boot</td>
+                            <td>
+                                <label><input type="radio" name="no_boot" value="true" checked>Yes</label>
+                                <label><input type="radio" name="no_boot" value="false">No</label>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>32</td>
+                            <td class="select">guided_size</td>
+                            <td ALIGN="left">
+                                <select name="guided_size" class="form-control" required>
+                                    <option value="max">max</option>
+                                    <option value="...">...</option>
+                                    <option value="guided">guided</option>
+                                </select>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>33</td>
+                            <td class="select">choose_recipe</td>
+                            <td ALIGN="left">
+                                <select name="choose_recipe" class="form-control" required>
+                                    <option value="custom-lvm">custom-lvm</option>
+                                    <option value="...">...</option>
+                                    <option value="guided">guided</option>
+                                </select>
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td>35</td>
+                            <td class="select">default_filesystem</td>
+                            <td ALIGN="left">
+                                <select name="default_filesystem" class="form-control" required>
+                                    <option value="ext4">ext4</option>
+                                    <option value="xfs">xfs</option>
+                                    <option value="zfs">zfs</option>
+                                </select>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>36</td>
+                            <td class="select">disk</td>
+                            <td ALIGN="left">
+                                <select name="disk" class="form-control" required>
+                                    <option value="/dev/sda">/dev/sda</option>
+                                    <option value="/dev/nvme">/dev/nvme</option>
+                                </select>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>37</td>
+                            <td>new_vg_name</td>
+                            <td><input name="new_vg_name" class="form-control" type="text" placeholder="vg-server"
+                                       maxlength="20" size="20"></td>
+                        </tr>
+
+
+
+                        <tr>
+                        <tr>
+                            <td>38</td>
+                            <td>boot_size</td>
+                            <td>
+                                <output for="fader" id="boot_size">300MB</output>
+                                <label for="fader"></label>
+                                <input type="range" class="form-control" name="boot_size"  min="100" max="1000" value="300" id="fader" step="1" oninput="bootSize(value+'MB')">
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>37</td>
+                            <td>no_swap</td>
+                            <td>
+                                <label><input type="radio" name="no_swap" value="true">Yes</label>
+
+                                <label><input type="radio" name="no_swap" value="false" checked >No</label>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>38</td>
+                            <td>swap_size</td>
+
+                            <td>
+                                <output for="fader1" id="swap_size">1024MB</output>
+                                <label for="fader1"></label>
+                                <input type="range" class="form-control" name="swap_size"  min="1024" max="4096" value="1024" id="fader1" step="1024" oninput="swapSize(value+'MB')">
+
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>39</td>
+                            <td>(/)_size</td>
+                            <td>
+                                <output for="fader2" id="root_size">3000MB</output>
+                                <label for="fader2"></label>
+                                <input type="range" class="form-control" name="root_size"  min="1000" max="10000" value="3000" id="fader2" step="1000" oninput="rootSize(value+'MB')">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>39</td>
+                            <td>usr_size</td>
+                            <td>
+                                <output for="fader3" id="usr_size">3000MB</output>
+                                <label for="fader3"></label>
+                                <input type="range" class="form-control" name="usr_size"  min="1000" max="5000" value="3000" id="fader3" step="1000" oninput="usrSize(value+'MB')">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>39</td>
+                            <td>home_size</td>
+                            <td>
+                                <output for="fader4" id="home_size">10000MB</output>
+                                <label for="fader4"></label>
+                                <input type="range" class="form-control" name="home_size"  min="1000" max="50000" value="10000" id="fader4" step="1000" oninput="homeSize(value+'MB')">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>40</td>
+                            <td>tmp_size</td>
+                            <td>
+                                <output for="fader5" id="tmp_size">1000MB</output>
+                                <label for="fader5"></label>
+                                <input type="range" class="form-control" name="tmp_size"  min="1000" max="50000" value="1000" id="fader5" step="1000" oninput="tmpSize(value+'MB')">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>40</td>
+                            <td>var_size</td>
+                            <td>
+                                <output for="fader6" id="var_size">10000MB</output>
+                                <label for="fader6"></label>
+                                <input type="range" class="form-control" name="var_size"  min="1000" max="-1" value="10000" id="fader6" step="1000" oninput="varSize(value+'MB')">
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>39</td>
+                            <td>confirm_write_new_label</td>
+                            <td>
+                                <label><input type="radio" name="confirm_write_new_label" value="true"
+                                              checked>Yes</label>
+                                <label><input type="radio" name="confirm_write_new_label" value="false">No</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>40</td>
+                            <td>confirm_write_new_label</td>
+                            <td>
+                                <label><input type="radio" name="confirm_write_new_label" value="true"
+                                              checked>Yes</label>
+                                <label><input type="radio" name="confirm_write_new_label" value="false">No</label>
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td>41</td>
+                            <td class="select">choose_partition_method</td>
+                            <td ALIGN="left">
+                                <select name="choose_partition_method" class="form-control">
+                                    <option value="finish">finish</option>
+                                    <option value="finish partitioning and write changes to disk">finish partitioning and write changes to disk</option>
+                                    <option value="edit">edit</option>
+                                    <option value="loflo">loflo</option>
+                                </select>
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td>42</td>
+                            <td>confirm</td>
+                            <td>
+                                <label><input type="radio" name="confirm" value="true" checked>Yes</label>
+                                <label><input type="radio" name="confirm" value="false">No</label>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>43</td>
+                            <td>apt-setup/cdrom</td>
+                            <td>
+                                <label><input type="radio" name="apt-setup/cdrom" value="true" checked>Yes</label>
+                                <label><input type="radio" name="apt-setup/cdrom" value="false">No</label>
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>44</td>
+                            <td>country</td>
+                            <td><input name="country" class="form-control" type="text" placeholder="manual"
+                                       maxlength="10" size="20"></td>
+                        </tr>
+
+
+                        <tr>
+                            <td>9</td>
+                            <td class="select">choose_interface</td>
+                            <td ALIGN="left">
+                                <select name="choose_interface" class="form-control">
+                                    <option value="auto">auto</option>
+                                    <option value="eth0">eth0</option>
+                                    <option value="enps0">enps0</option>
+                                    <option value="loflo">loflo</option>
+                                </select>
+                            </td>
+                        </tr>
+
+                        <tr>
+                        <td>5</td>
+                            <td>Install Additions</td>
+                            <td>
+                            <select class="selectpicker" name="additons_enabled" multiple data-live-search="true">
+                              <option>openssh-server</option>
+                              <option>sudo</option>
+                              <option>ntp</option>
+                              <option>vim</option>
+                            </select>
+                        </td>
+                        </tr>
+                    </table>
+
+                    <input type="hidden" name="autoGenerate" value="debian">
+
+                    <div>
+                        <button class='btn btn-primary spinner-grow spinner-grow-sm' type="submit">Accept</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% block script %}
+        <script>
+            $(document).ready(function () {
+                $('input[name="ntp"]').on('change', function (e) {
+                    if($(this).val() == 'true'){
+                        $('input[name="ntp_server_address"]').css('display','block')
+
+                    }else{
+                        $('input[name="ntp_server_address"]').css('display','none')
+
+                    }
+
+                })
+            })
+        </script>
+        <script>
+            $(document).ready(function () {
+                $('input[name="ipv4"]').on('change', function (e) {
+                    if($(this).val() == 'true'){
+                        $('input[name="ipv4_address"]').css('display','block')
+                        $('input[name="ipv4_netmask"]').css('display','block')
+                        $('input[name="ipv4_gateway"]').css('display','block')
+                        $('input[name="ipv4_nameserver"]').css('display','block')
+
+                    }else{
+                        $('input[name="ipv4_address"]').css('display','none')
+                        $('input[name="ipv4_netmask"]').css('display','none')
+                        $('input[name="ipv4_gateway"]').css('display','none')
+                        $('input[name="ipv4_nameserver"]').css('display','none')
+
+                    }
+
+                })
+            })
+        </script>
+        <script>
+            $(document).ready(function () {
+                $('input[name="multi_locale"]').on('change', function (e) {
+                    if($(this).val() == 'true'){
+                        $('input[name="multi_language_environment"]').css('display','block')
+                    }else{
+                        $('input[name="multi_language_environment"]').css('display','none')
+
+                    }
+
+                })
+            })
+        </script>
+
+        <script>
+            $('multi_language_environment').multiSelect('select', String|Array);
+        </script>
+
+        <script>
+        function bootSize(vol) {
+            document.querySelector('#boot_size').value = vol;
+        }
+        function swapSize(vol) {
+            document.querySelector('#swap_size').value = vol;
+        }
+        function rootSize(vol) {
+            document.querySelector('#root_size').value = vol;
+        }
+        function usrSize(vol) {
+            document.querySelector('#usr_size').value = vol;
+        }
+        function homeSize(vol) {
+            document.querySelector('#home_size').value = vol;
+        }
+        function tmpSize(vol) {
+            document.querySelector('#tmp_size').value = vol;
+        }
+        function varSize(vol) {
+            document.querySelector('#var_size').value = vol;
+        }
+        </script>
+
+
+    {% endblock %}
+
+{% endblock %}
