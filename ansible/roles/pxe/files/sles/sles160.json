@@ -1,0 +1,63 @@
+{
+  "hostname": {
+    "transient": "agama",
+    "static": ""
+  },
+  "root": {
+    "password": "1234567",
+    "hashedPassword": false
+  },
+  "software": {
+    "patterns": [
+      "gateway_server",
+      "lamp_server",
+      "fips",
+      "dhcp_dns_server",
+      "gnome",
+      "sw_management",
+      "mail_server",
+      "directory_server",
+      "cockpit",
+      "print_server",
+      "documentation",
+      "container_runtime_docker",
+      "selinux",
+      "file_server",
+      "devel_kernel",
+      "kvm_tools",
+      "oracle_server",
+      "devel_basis",
+      "sles_sap_minimal_sap"
+    ],
+    "packages": []
+  },
+  "product": {
+    "id": "SLES"
+  },
+  "storage": {
+    "drives": [
+      {
+        "search": {
+          "condition": {
+            "name": "/dev/sda"
+          },
+          "ifNotFound": "error"
+        },
+        "partitions": [
+          {
+            "search": "*",
+            "delete": true
+          },
+          {
+            "generate": "default"
+          }
+        ]
+      }
+    ]
+  },
+  "localization": {
+    "language": "en_US.UTF-8",
+    "keyboard": "us",
+    "timezone": "Europe/Berlin"
+  }
+}

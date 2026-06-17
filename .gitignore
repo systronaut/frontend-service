@@ -101,6 +101,12 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# Systronaut runtime data (never commit secrets or local state)
+*.db
+control-plane/**/*.db
+pxe-engine/**/hosts.json
+.DS_Store
+
 # Environments
 .env
 .venv

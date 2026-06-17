@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<h3 class="mb-1">Audit log</h3>
+<p class="text-muted-2">Append-only record of every state-changing action (ISO 27001 A.8.15, NIS2 21(2)(g)).</p>
+<div class="surface p-3">
+  <table class="table table-sm mb-0">
+    <thead><tr><th>Timestamp (UTC)</th><th>Actor</th><th>Action</th><th>Target</th><th>Detail</th></tr></thead>
+    <tbody>
+    {% for e in entries %}
+      <tr>
+        <td class="mono text-muted-2">{{ e.ts }}</td>
+        <td>{{ e.actor }}</td>
+        <td><span class="pill pill-info">{{ e.action }}</span></td>
+        <td class="mono">{{ e.target or '' }}</td>
+        <td class="text-muted-2">{{ e.detail or '' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="text-muted-2">No audit entries yet.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

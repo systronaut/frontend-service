@@ -1,0 +1,5 @@
+Flask==3.0.3
+gunicorn==22.0.0
+requests==2.32.3
+pyvmomi==8.0.3.0.1          # vSphere (real) + ESXi adapter
+# openstacksdk==3.3.0       # OpenStack (uncomment when implementing that adapter)

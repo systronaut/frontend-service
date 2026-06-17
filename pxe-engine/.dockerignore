@@ -1,0 +1,7 @@
+# Keep the pxe-engine image lean and secret-free.
+**/__pycache__/
+**/*.pyc
+*.json
+.env
+.git
+.gitignore

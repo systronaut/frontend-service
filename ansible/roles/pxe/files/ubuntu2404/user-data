@@ -1,0 +1,21 @@
+#cloud-config
+autoinstall:
+  version: 1
+  source:
+    id: ubuntu-server
+  identity:
+    hostname: ubuntu-test-server
+    username: testuser
+    password: "$5$03E62CF92219AB7B$xtAJNj7zB4wyvYA7HYSMUYvp8S/CqpHAJiDAOFin9uD"
+  locale: "en_US.UTF-8"
+  keyboard:
+    layout: us
+  timezone: "Etc/UTC"
+  storage:
+    layout:
+      name: lvm
+      sizing-policy: all
+      match:
+        path: /dev/sda
+  ssh:
+    install-server: true

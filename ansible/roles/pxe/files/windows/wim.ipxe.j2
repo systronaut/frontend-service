@@ -1,0 +1,12 @@
+#!ipxe
+
+set base-url http://{{ host_ip }}/windows/wim
+
+kernel ${base-url}/wimboot
+initrd ${base-url}/bootmgr
+initrd ${base-url}/bootmgr.efi
+initrd ${base-url}/boot.wim
+initrd ${base-url}/pxe_samba.txt pxe_samba.txt
+initrd ${base-url}/pxe_autounattend.xml pxe_autounattend.xml
+
+boot

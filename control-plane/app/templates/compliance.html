@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Compliance{% endblock %}
+{% block content %}
+<h3 class="mb-1">Compliance control mapping</h3>
+<p class="text-muted-2">Each hardening control is mapped to ISO/IEC 27001:2022 Annex A and NIS2 Art. 21(2). Profiles bundle controls; deployments record exactly which were enforced.</p>
+
+<div class="surface p-3 mb-4">
+  <div class="card-header px-2 pb-2 mb-3">Profiles</div>
+  <div class="row">
+    {% for p in profiles %}
+    <div class="col-md-4 mb-2">
+      <strong>{{ p.label }}</strong>
+      {% for s in p.standards %}<span class="std-chip">{{ s }}</span>{% endfor %}
+      <div class="os-meta">{{ p.description }}</div>
+      <div class="os-meta">{{ p.controls()|length }} controls</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="surface p-3">
+  <div class="card-header px-2 pb-2 mb-3">Controls ({{ controls|length }})</div>
+  <table class="table mb-0">
+    <thead><tr><th>Control</th><th>Mechanism</th><th>ISO 27001:2022</th><th>NIS2 Art.21(2)</th><th>Scope</th></tr></thead>
+    <tbody>
+    {% for c in controls %}
+      <tr>
+        <td><strong>{{ c.title }}</strong><div class="os-meta">{{ c.description }}</div></td>
+        <td><span class="mono text-muted-2">{{ c.mechanism }}</span></td>
+        <td>{% for r in c.iso27001 %}<span class="std-chip">{{ r }}</span> {% endfor %}</td>
+        <td>{% for r in c.nis2 %}<span class="pill pill-info">{{ r }}</span> {% endfor %}</td>
+        <td>{% for f in c.applies_to %}<span class="pill pill-muted">{{ f }}</span> {% endfor %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

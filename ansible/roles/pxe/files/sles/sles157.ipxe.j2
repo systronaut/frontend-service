@@ -1,0 +1,11 @@
+#!ipxe
+
+set base-url http://{{ host_ip }}/sles157
+
+kernel ${base-url}/boot/x86_64/loader/linux install=${base-url}/ autoyast=${base-url}/sles15sp7.xml insecure=1
+
+initrd ${base-url}/boot/x86_64/loader/initrd
+
+boot
+
+

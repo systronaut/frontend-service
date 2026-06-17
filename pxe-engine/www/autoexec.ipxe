@@ -1,0 +1,10 @@
+#!ipxe
+# Systronaut PXE engine -- top-level iPXE entry served at the HTTP root.
+# Each target chains to its own backend-rendered per-host script keyed by MAC.
+# Build/point your iPXE binary at this (embed: chain http://<host_ip>/autoexec.ipxe).
+#
+# ${mac:hexhyp} expands to the NIC MAC with hyphens, e.g. 00-0a-95-9d-68-16,
+# matching the per-host directory the control plane registered.
+chain http://${next-server}/host/${mac:hexhyp}/boot.ipxe ||
+chain http://${next-server}/lookup/ipxe/autoexec.ipxe ||
+shell

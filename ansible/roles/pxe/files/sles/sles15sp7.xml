@@ -1,0 +1,245 @@
+<?xml version="1.0"?>
+<!DOCTYPE profile>
+<profile xmlns="http://www.suse.com/1.0/yast2ns" xmlns:config="http://www.suse.com/1.0/configns">
+  <bootloader>
+    <loader_type>grub2-efi</loader_type>
+  </bootloader>
+  <general>
+    <ask-list config:type="list"/>
+    <mode>
+      <confirm config:type="boolean">false</confirm>
+      <second_stage config:type="boolean">false</second_stage>
+    </mode>
+  </general>
+
+  <add-on t="map">
+    <add_on_products t="list">
+      <listentry t="map">
+	<media_url>relurl:///</media_url>
+        <product>sle-module-basesystem</product>
+        <product_dir>/Module-Basesystem</product_dir>
+      </listentry>
+      <listentry t="map">
+	<media_url>relurl:///</media_url>
+        <product>sle-module-transactional-server</product>
+        <product_dir>/Module-Transactional-Server</product_dir>
+      </listentry>
+      <listentry t="map">
+	<media_url>relurl:///</media_url>
+        <product>sle-module-server-applications</product>
+        <product_dir>/Module-Server-Applications</product_dir>
+      </listentry>
+      <listentry t="map">
+	<media_url>relurl:///</media_url>
+        <product>sle-module-python3</product>
+        <product_dir>/Module-Python3</product_dir>
+      </listentry>
+      <listentry t="map">
+	<media_url>relurl:///</media_url>
+        <product>sle-module-desktop-applications</product>
+        <product_dir>/Module-Desktop-Applications</product_dir>
+      </listentry>
+      <listentry t="map">
+	<media_url>relurl:///</media_url>
+        <product>sle-module-web-scripting</product>
+        <product_dir>/Module-Web-Scripting</product_dir>
+      </listentry>
+      <listentry t="map">
+	<media_url>relurl:///</media_url>
+        <product>sle-module-live-patching</product>
+        <product_dir>/Module-Live-Patching</product_dir>
+      </listentry>
+      <listentry t="map">
+	<media_url>relurl:///</media_url>
+        <product>sle-module-legacy</product>
+        <product_dir>/Module-Legacy</product_dir>
+      </listentry>
+      <listentry t="map">
+	<media_url>relurl:///</media_url>
+        <product>sle-module-development-tools</product>
+        <product_dir>/Module-Development-Tools</product_dir>
+      </listentry>
+    </add_on_products>
+  </add-on>
+  
+  <services-manager t="map">
+    <default_target>graphical</default_target>
+    <services t="map">
+      <enable t="list">
+        <service>YaST2-Firstboot</service>
+        <service>YaST2-Second-Stage</service>
+        <service>apparmor</service>
+        <service>appstream-sync-cache</service>
+        <service>auditd</service>
+        <service>bluetooth</service>
+        <service>klog</service>
+        <service>cron</service>
+        <service>firewalld</service>
+        <service>wickedd-auto4</service>
+        <service>wickedd-dhcp4</service>
+        <service>wickedd-dhcp6</service>
+        <service>wickedd-nanny</service>
+        <service>display-manager</service>
+        <service>irqbalance</service>
+        <service>iscsi</service>
+        <service>issue-generator</service>
+        <service>kbdsettings</service>
+        <service>kdump</service>
+        <service>kdump-early</service>
+        <service>kdump-notify</service>
+        <service>lvm2-monitor</service>
+        <service>wicked</service>
+        <service>nscd</service>
+        <service>nvmefc-boot-connections</service>
+        <service>nvmf-autoconnect</service>
+        <service>oracle</service>
+        <service>postfix</service>
+        <service>purge-kernels</service>
+        <service>rollback</service>
+        <service>rsyslog</service>
+        <service>sapconf</service>
+        <service>smartd</service>
+        <service>sshd</service>
+        <service>sysctl-logger</service>
+        <service>systemd-pstore</service>
+        <service>systemd-remount-fs</service>
+        <service>virtqemud</service>
+        <service>virtxend</service>
+        <service>xencommons</service>
+      </enable>
+      <on_demand t="list">
+        <listentry>iscsid</listentry>
+        <listentry>pcscd</listentry>
+        <listentry>uuidd</listentry>
+        <listentry>virtlockd</listentry>
+        <listentry>virtlogd</listentry>
+        <listentry>virtnetworkd</listentry>
+        <listentry>virtnodedevd</listentry>
+        <listentry>virtnwfilterd</listentry>
+        <listentry>virtsecretd</listentry>
+        <listentry>virtstoraged</listentry>
+      </on_demand>
+    </services>
+  </services-manager>
+  
+  <keyboard>
+    <keymap>english-us</keymap>
+  </keyboard>
+  <language>
+    <language>en_US</language>
+    <languages/>
+  </language>
+  <partitioning config:type="list">
+    <drive>
+      <device>/dev/sda</device>
+      <use>all</use>
+    </drive>
+  </partitioning>
+
+  <software t="map">
+    <install_recommended t="boolean">true</install_recommended>
+    <instsource/>
+    <packages t="list">
+      <package>xfsprogs</package>
+      <package>wicked</package>
+      <package>snapper</package>
+      <package>sles-release</package>
+      <package>sle-module-web-scripting-release</package>
+      <package>sle-module-transactional-server-release</package>
+      <package>sle-module-server-applications-release</package>
+      <package>sle-module-python3-release</package>
+      <package>sle-module-live-patching-release</package>
+      <package>sle-module-legacy-release</package>
+      <package>sle-module-development-tools-release</package>
+      <package>sle-module-desktop-applications-release</package>
+      <package>sle-module-basesystem-release</package>
+      <package>shim</package>
+      <package>openssh</package>
+      <package>nvme-cli</package>
+      <package>numactl</package>
+      <package>mokutil</package>
+      <package>mdadm</package>
+      <package>kexec-tools</package>
+      <package>kdump</package>
+      <package>irqbalance</package>
+      <package>grub2-x86_64-efi</package>
+      <package>glibc</package>
+      <package>firewalld</package>
+      <package>e2fsprogs</package>
+      <package>dosfstools</package>
+      <package>btrfsprogs</package>
+      <package>autoyast2</package>
+    </packages>
+    <patterns t="list">
+      <pattern>32bit</pattern>
+      <pattern>apparmor</pattern>
+      <pattern>apparmor-32bit</pattern>
+      <pattern>base</pattern>
+      <pattern>base-32bit</pattern>
+      <pattern>basesystem</pattern>
+      <pattern>basic_desktop</pattern>
+      <pattern>common-criteria</pattern>
+      <pattern>devel_basis</pattern>
+      <pattern>devel_kernel</pattern>
+      <pattern>devel_yast</pattern>
+      <pattern>dhcp_dns_server</pattern>
+      <pattern>directory_server</pattern>
+      <pattern>documentation</pattern>
+      <pattern>enhanced_base</pattern>
+      <pattern>enhanced_base-32bit</pattern>
+      <pattern>file_server</pattern>
+      <pattern>fips</pattern>
+      <pattern>fonts</pattern>
+      <pattern>gateway_server</pattern>
+      <pattern>gnome_basic</pattern>
+      <pattern>gnome_basis</pattern>
+      <pattern>kvm_server</pattern>
+      <pattern>kvm_tools</pattern>
+      <pattern>lamp_server</pattern>
+      <pattern>lp_sles</pattern>
+      <pattern>mail_server</pattern>
+      <pattern>minimal_base</pattern>
+      <pattern>minimal_base-32bit</pattern>
+      <pattern>ofed</pattern>
+      <pattern>oracle_server</pattern>
+      <pattern>print_server</pattern>
+      <pattern>sap_server</pattern>
+      <pattern>sw_management</pattern>
+      <pattern>sw_management-32bit</pattern>
+      <pattern>wsl_base</pattern>
+      <pattern>wsl_gui</pattern>
+      <pattern>x11</pattern>
+      <pattern>x11-32bit</pattern>
+      <pattern>x11_enhanced</pattern>
+      <pattern>x11_enhanced-32bit</pattern>
+      <pattern>x11_yast</pattern>
+      <pattern>xen_server</pattern>
+      <pattern>xen_tools</pattern>
+      <pattern>yast2_basis</pattern>
+      <pattern>yast2_desktop</pattern>
+      <pattern>yast2_server</pattern>
+    </patterns>
+    <products t="list">
+      <product>SLES</product>
+    </products>
+  </software>
+ 
+  <timezone>
+    <hwclock>UTC</hwclock>
+    <timezone>America/New_York</timezone>
+  </timezone>
+  <users config:type="list">
+    <user>
+      <authorized_keys config:type="list"/>
+      <encrypted config:type="boolean">true</encrypted>
+      <fullname>root</fullname>
+      <gid>0</gid>
+      <home>/root</home>
+      <home_btrfs_subvolume config:type="boolean">false</home_btrfs_subvolume>
+      <shell>/bin/bash</shell>
+      <uid>0</uid>
+      <user_password>X/8hiIOjr5I52</user_password>
+      <username>root</username>
+    </user>
+  </users>
+</profile>

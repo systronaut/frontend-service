@@ -1,0 +1,28 @@
+#!ipxe
+
+set base_url http://{{ host_ip }}/debian13
+
+console --picture ${base_url}/splash.png || echo No splash image found
+
+menu Debian 13.4 Installation Menu
+item appserver   Install App Server
+item dbserver    Install DB Server
+
+choose --default appserver --timeout 10000 selected || goto cancel
+goto ${selected}
+
+:appserver
+echo Loading App Server Installer...
+kernel ${base_url}/linux auto=true priority=critical vga=normal preseed/file=/appserver.cfg ---
+initrd ${base_url}/initrd.gz
+boot
+
+:dbserver
+echo Loading DB Server Installer...
+kernel ${base_url}/linux auto=true priority=critical vga=normal preseed/file=/dbserver.cfg ---
+initrd ${base_url}/initrd.gz
+boot
+
+:cancel
+echo User cancelled, booting from local disk...
+exit

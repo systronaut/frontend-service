@@ -1,0 +1,9 @@
+#!ipxe
+
+set base-url http://{{ host_ip }}/rhel97
+
+kernel ${base-url}/images/pxeboot/vmlinuz inst.repo=${base-url}/ inst.ks=${base-url}/rhel97_ks.cfg
+
+initrd ${base-url}/images/pxeboot/initrd.img
+
+boot

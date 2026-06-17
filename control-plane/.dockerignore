@@ -1,0 +1,10 @@
+# Keep the control-plane image lean and secret-free.
+**/__pycache__/
+**/*.pyc
+*.db
+.env
+.git
+.gitignore
+.venv
+tests/
+README.md

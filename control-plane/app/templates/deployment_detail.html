@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Deployment {{ dep.id }}{% endblock %}
+{% block content %}
+{% set ev = dep.compliance_evidence %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3 class="mb-0">{{ dep.spec.hostname }} <span class="mono text-muted-2">#{{ dep.id }}</span></h3>
+    <div class="os-meta">{{ image.label if image else dep.spec.os_key }} · {{ dep.spec.provider.value }}</div>
+  </div>
+  <div>{% set d = dep %}{% include 'partials/status_pill.html' %}</div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6 mb-4">
+    <div class="surface p-3 h-100">
+      <div class="card-header px-2 pb-2 mb-3">Specification</div>
+      <table class="table table-sm mb-0">
+        <tr><th>OS</th><td>{{ image.label if image else dep.spec.os_key }}</td></tr>
+        <tr><th>Provider</th><td>{{ dep.spec.provider.value }}</td></tr>
+        <tr><th>Profile</th><td>{{ dep.spec.security_profile }}</td></tr>
+        <tr><th>vCPU / RAM / Disk</th><td>{{ dep.spec.cpu }} · {{ dep.spec.memory_mb }} MB · {{ dep.spec.disk_gb }} GB</td></tr>
+        <tr><th>Network</th><td>{{ dep.spec.network.mode }}
+          {% if dep.spec.network.ip %}· {{ dep.spec.network.ip }}{% endif %}</td></tr>
+        <tr><th>MAC</th><td class="mono">{{ dep.spec.network.mac or '—' }}</td></tr>
+        <tr><th>Provider ref</th><td class="mono">{{ dep.provider_ref or '—' }}</td></tr>
+        <tr><th>Requested by</th><td>{{ dep.spec.requested_by }}</td></tr>
+        <tr><th>Created / updated</th><td class="mono text-muted-2">{{ dep.created_at }} · {{ dep.updated_at }}</td></tr>
+      </table>
+      {% if dep.message %}<div class="alert alert-secondary small mt-3 mb-0">{{ dep.message }}</div>{% endif %}
+      {% if session.get('role') == 'admin' and dep.status.value != 'destroyed' %}
+      <form method="post" action="{{ url_for('web.deployment_destroy', dep_id=dep.id) }}" class="mt-3"
+            onsubmit="return confirm('Destroy deployment {{ dep.id }}?');">
+        <button class="btn btn-outline-light btn-sm" type="submit">Destroy deployment</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-6 mb-4">
+    <div class="surface p-3 h-100">
+      <div class="card-header px-2 pb-2 mb-3 d-flex justify-content-between">
+        <span>Compliance evidence</span>
+        <span>
+          {% for s in ev.get('standards', []) %}<span class="std-chip">{{ s }}</span>{% endfor %}
+          {% if ev.get('fully_compliant') %}<span class="pill pill-ok">fully compliant</span>
+          {% elif ev.get('standards') %}<span class="pill pill-warn">{{ ev.get('gaps', [])|length }} gap(s)</span>{% endif %}
+        </span>
+      </div>
+      <div class="mb-2 os-meta">Applied controls</div>
+      <ul class="list-unstyled mb-3">
+        {% for c in ev.get('applied_controls', []) %}
+        <li class="mb-1">
+          <span class="pill pill-ok">✓</span> {{ c.title }}
+          <span class="text-muted-2 small">
+            [{{ c.iso27001|join(', ') }} · NIS2 {{ c.nis2|join(', ') }}]
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% if ev.get('gaps') %}
+      <div class="mb-2 os-meta">Gaps (recorded, not applied)</div>
+      <ul class="list-unstyled mb-0">
+        {% for g in ev.get('gaps', []) %}
+        <li class="mb-1"><span class="pill pill-warn">!</span> {{ g.title }}
+          <span class="text-muted-2 small">— {{ g.reason }}</span></li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <a class="small d-block mt-3" href="{{ url_for('api.deployment_compliance', dep_id=dep.id) }}">Compliance JSON (API) &rarr;</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

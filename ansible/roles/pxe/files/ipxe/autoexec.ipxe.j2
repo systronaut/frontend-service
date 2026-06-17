@@ -1,0 +1,63 @@
+#!ipxe
+
+ifclose
+ifopen
+
+console --picture splash.png
+
+cpair --foreground 7 --background 6 2
+
+menu PXE Boot Entries
+
+item win2022     Install Windows Server 2022
+item rhel97      Install Redhat Enterprise Linux 9.7
+item rhel101     Install Redhat Enterprise Linux 10.1
+item rocky97     Install Rocky Linux 9.7
+item rocky101    Install Rocky Linux 10.1
+item debian13    Install Debian Linux 13.4
+item ubuntu2404  Install Ubuntu 24.04 LTS
+item oracle101   Install Oracle Linux 10.1 UEK
+item sles157     Install Suse Enterprise Linux 15 SP7
+item sles160     Install Suse Enterprise Linux 16.0
+item shell       Enter iPXE command line
+item exit        Exit(continue local boot)
+
+choose --default win2022 --timeout 10000 selected || goto exit
+goto ${selected}
+
+:win2022
+chain http://{{ host_ip }}/windows/wim.ipxe
+
+:rhel97
+chain http://{{ host_ip }}/rhel97/rhel97.ipxe
+
+:rhel101
+chain http://{{ host_ip }}/rhel101/rhel101.ipxe
+
+:rocky97
+chain http://{{ host_ip }}/rocky97/rocky97.ipxe
+
+:rocky101
+chain http://{{ host_ip }}/rocky101/rocky101.ipxe
+
+:debian13
+chain http://{{ host_ip }}/debian13/debian13.ipxe
+
+:ubuntu2404
+chain http://{{ host_ip }}/ubuntu2404/ubuntu2404.ipxe
+
+:oracle101
+chain http://{{ host_ip }}/oracle101/oracle101.ipxe
+
+:sles157
+chain http://{{ host_ip }}/sles157/sles157.ipxe
+
+:sles160
+chain http://{{ host_ip }}/sles160/sles160.ipxe
+
+:shell
+shell
+goto start
+
+:exit
+exit

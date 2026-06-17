@@ -1,0 +1,11 @@
+#!ipxe
+
+set base-url http://{{ host_ip }}/oracle101
+
+kernel ${base-url}/images/pxeboot/vmlinuz inst.stage2=${base-url}/ inst.ks=${base-url}/oracle101_ks.cfg
+
+initrd ${base-url}/images/pxeboot/initrd.img
+
+boot
+
+

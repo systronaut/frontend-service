@@ -1,0 +1,5 @@
+{# Expects `d` (a Deployment with a .status enum). #}
+{%- set s = d.status.value -%}
+{%- set cls = {'ready':'pill-ok','scheduled':'pill-info','installing':'pill-info',
+               'pending':'pill-warn','failed':'pill-danger','destroyed':'pill-muted'} -%}
+<span class="pill {{ cls.get(s, 'pill-muted') }}">{{ s }}</span>

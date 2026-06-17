@@ -1,0 +1,26 @@
+#!ipxe
+# Rendered by the Systronaut control plane (Jinja2) -- per-host boot script.
+# host: {{ hostname }}  mac: {{ mac }}  os: {{ os_key }}  profile: {{ security_profile }}
+set base http://{{ host_ip }}
+set hardening_url ${base}/host/{{ slug }}/hardening.env
+{% if net_mode == 'static' and ip %}
+set ip {{ ip }}
+set netmask {{ netmask }}
+set gateway {{ gateway }}
+ifopen
+{% endif %}
+echo Systronaut: staging {{ os_label }} for {{ hostname }} ({{ security_profile }})
+# Chain to the OS installer. The installer's post/late hook fetches
+# ${hardening_url} + the CIS script to apply the selected NIS2/ISO 27001/CIS
+# controls.
+{% if have_os_ipxe %}
+# Backend-rendered OS iPXE (host_ip already substituted).
+chain ${base}/host/{{ slug }}/os.ipxe || goto fail
+{% else %}
+# Fallback: chain the OS script straight from the read-only lookup tree.
+chain ${base}/lookup/{{ ipxe_chain }} || goto fail
+{% endif %}
+:fail
+echo Failed to chain OS installer for {{ hostname }}
+sleep 5
+shell

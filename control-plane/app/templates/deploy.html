@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Deploy{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">New deployment</h3>
+  <a href="{{ url_for('web.index') }}" class="text-muted-2">&larr; Cancel</a>
+</div>
+
+<form method="post" action="{{ url_for('web.deploy_submit') }}">
+  <div class="row">
+    <!-- left: OS + provider + security -->
+    <div class="col-lg-8">
+      <div class="surface p-3 mb-4">
+        <div class="card-header px-2 pb-2 mb-3">1 &middot; Operating system</div>
+        <div class="os-grid">
+          {% for img in images %}
+          <label class="os-tile mb-0">
+            <input type="radio" name="os_key" value="{{ img.key }}" data-notes="{{ img.notes }}"
+                   {{ 'checked' if loop.first }} required>
+            <div class="os-tile-body">
+              <div class="os-fam">{{ img.family }}</div>
+              <div class="os-name">{{ img.label }}</div>
+              <div class="os-meta">{{ img.distro }} · {{ img.version }} · {{ img.firmware|upper }}</div>
+            </div>
+          </label>
+          {% endfor %}
+        </div>
+        <p id="os-hint" class="os-meta mt-2 mb-0"></p>
+      </div>
+
+      <div class="surface p-3 mb-4">
+        <div class="card-header px-2 pb-2 mb-3">2 &middot; Target</div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Provider</label>
+            <select name="provider" class="form-control">
+              {% for name, p in providers.items() %}
+              <option value="{{ name }}">{{ name }}{{ '' if p.implemented else ' (preview)' }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group col-md-6">
+            <label>Hostname</label>
+            <input name="hostname" class="form-control" placeholder="web01" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-4"><label>vCPU</label>
+            <input name="cpu" type="number" min="1" max="128" value="2" class="form-control"></div>
+          <div class="form-group col-md-4"><label>Memory (MB)</label>
+            <input name="memory_mb" type="number" min="512" step="512" value="4096" class="form-control"></div>
+          <div class="form-group col-md-4"><label>Disk (GB)</label>
+            <input name="disk_gb" type="number" min="8" value="40" class="form-control"></div>
+        </div>
+      </div>
+
+      <div class="surface p-3 mb-4">
+        <div class="card-header px-2 pb-2 mb-3">3 &middot; Network</div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Mode</label>
+            <select name="net_mode" class="form-control">
+              <option value="dhcp">DHCP (proxyDHCP / lease)</option>
+              <option value="static">Static</option>
+            </select>
+          </div>
+          <div class="form-group col-md-6">
+            <label>MAC address <span class="text-muted-2">(required for PXE)</span></label>
+            <input name="mac" class="form-control mono" placeholder="00:0A:95:9D:68:16">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6"><label>Domain / zone</label>
+            <input name="domain" class="form-control" placeholder="corp.example.com"></div>
+          <div class="form-group col-md-6"><label>Lease</label>
+            <input name="lease" class="form-control" value="12h"></div>
+        </div>
+        <div id="static-net" style="display:none">
+          <hr style="border-color:rgba(148,163,184,.2)">
+          <div class="form-row">
+            <div class="form-group col-md-6"><label>IP address</label>
+              <input name="ip" class="form-control mono" placeholder="192.168.10.20"></div>
+            <div class="form-group col-md-6"><label>Netmask</label>
+              <input name="netmask" class="form-control mono" value="255.255.255.0"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group col-md-6"><label>Gateway</label>
+              <input name="gateway" class="form-control mono" placeholder="192.168.10.1"></div>
+            <div class="form-group col-md-6"><label>DNS</label>
+              <input name="dns" class="form-control mono" placeholder="192.168.10.1"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- right: security profile + submit -->
+    <div class="col-lg-4">
+      <div class="surface p-3 mb-4">
+        <div class="card-header px-2 pb-2 mb-3">4 &middot; Security profile</div>
+        {% for p in profiles %}
+        <label class="d-block mb-3" style="cursor:pointer">
+          <input type="radio" name="security_profile" value="{{ p.name }}"
+                 {{ 'checked' if p.name == default_profile }}>
+          <strong>{{ p.label }}</strong>
+          {% for s in p.standards %}<span class="std-chip">{{ s }}</span>{% endfor %}
+          <div class="os-meta">{{ p.description }}</div>
+          <div class="os-meta">{{ p.controls()|length }} controls</div>
+        </label>
+        {% endfor %}
+        <div class="alert alert-info py-2 small mb-0">
+          The selected controls are woven into the OS answer file at install time.
+          Non-applicable controls are recorded as compliance gaps, never silently dropped.
+        </div>
+      </div>
+      <button class="btn btn-primary btn-lg btn-block" type="submit">Deploy securely</button>
+      <p class="os-meta text-center mt-2">
+        UEFI Secure Boot targets only · install runs unattended on next network boot
+      </p>
+    </div>
+  </div>
+</form>
+{% endblock %}

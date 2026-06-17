@@ -1,0 +1,104 @@
+# {{ ansible_managed }}
+
+path debian-installer/amd64/boot-screens/
+default debian-installer/amd64/boot-screens/vesamenu.c32
+prompt 0
+ONTIMEOUT local
+timeout 300
+
+MENU color border       1;36;44    #ffffffff #00000000 std
+MENU color title        1;36;44    #ffffffff #00000000 std
+MENU color tabmsg       1;36;44    #ffffffff #00000000 std
+MENU color timeout_msg  1;36;44    #ffffffff #00000000 std
+MENU color sel          7;37;40    #ffffffff #64ff0000 all
+MENU color hotsel       1;7;37;40  #ffffffff #64ff0000 all
+
+MENU TITLE SYSTRONAUT
+MENU BACKGROUND 30
+
+LABEL memtest
+    KERNEL memtest/mt86plus
+
+LABEL local
+    MENU LABEL Boot local hard drive
+    LOCALBOOT 0
+
+LABEL debian-installer/bullseye-appserver
+    MENU LABEL debian-installer/buster-appserver
+    KERNEL debian-installer/amd64/linux
+    APPEND vga=normal initrd=debian-installer/amd64/initrd.gz auto=true interface=auto netcfg/dhcp_timeout=60 netcfg/choose_interface=auto priority=critical preseed/file=/appserver.cfg IPAPPEND 2
+
+LABEL debian-installer/bullseye-dbserver
+    MENU LABEL debian-installer/buster-dbserver
+    KERNEL debian-installer/amd64/linux
+    APPEND vga=normal initrd=debian-installer/amd64/initrd.gz auto=true interface=auto netcfg/dhcp_timeout=60 netcfg/choose_interface=auto priority=critical preseed/file=/dbserver.cfg IPAPPEND 2
+
+LABEL debian-installer/bullseye-crypted
+    MENU LABEL debian-installer/buster-crypted
+    KERNEL debian-installer/amd64/linux
+    APPEND vga=normal initrd=debian-installer/amd64/initrd.gz auto=true interface=auto netcfg/dhcp_timeout=60 netcfg/choose_interface=auto priority=critical preseed/file=/crypted.cfg IPAPPEND 2
+
+LABEL rhel-installer/rhel9.2
+    MENU LABEL rhel-installer/
+    KERNEL rhel-installer/vmlinuz
+    INITRD initrd=rhel-installer/NEWISO.iso inst.stage2=hd:LABEL=RHEL-9-2-0-BaseOS-x86_64 inst.ks=hd:LABEL=RHEL-9-2-0-BaseOS-x86_64:/rhel-installer/rhel9.ks quiet
+    APPEND iso raw
+
+label NEW/rhel-installer/rhel9.2
+  menu label Install Red Hat Enterprise Linux 9.2
+  menu rhel-installer/rhel9.2
+  kernel vmlinuz
+  append initrd=rhel-installer/rhel-9.2-x86_64-boot.iso inst.stage2=hd:LABEL=RHEL-9-2-0-BaseOS-x86_64 inst.ks=/rhel-installer/rhel9.ks
+
+LABEL windows-installer/desktop/10
+    MENU LABEL windows-10-desktop
+    KERNEL /memdisk
+    INITRD windows-installer/desktop/10/winpe.iso
+    APPEND iso raw
+
+LABEL windows-installer/desktop/11
+    MENU LABEL windows-11-desktop
+    KERNEL /memdisk
+    INITRD windows-installer/desktop/11/winpe.iso
+    APPEND iso raw
+
+LABEL windows-installer/server/2008r2
+    MENU LABEL windows-installer/server/2008r2
+    KERNEL /memdisk
+    INITRD windows-installer/server/2008r2/winpe.iso
+    APPEND iso raw
+
+LABEL windows-installer/server/2012r2
+    MENU LABEL windows-installer/server/2012r2
+    KERNEL /memdisk
+    INITRD windows-installer/server/2012r2/winpe.iso
+    APPEND iso raw
+
+LABEL windows-installer/server/windows-server-2016-standart
+    MENU LABEL windows-installer/server/2016
+    KERNEL /memdisk
+    INITRD windows-installer/2016/winpe.iso
+    APPEND iso raw
+
+LABEL windows-installer/server/2019
+    MENU LABEL windows-installer/server/2019
+    KERNEL /memdisk
+    INITRD windows-installer/server/2019/winpe.iso
+    APPEND iso raw
+
+LABEL windows-installer/server/2022
+    MENU LABEL windows-installer/server/2022
+    KERNEL /memdisk
+    INITRD windows-installer/server/2022/winpe.iso
+    APPEND iso raw
+
+LABEL oracle-installer/oracle-76
+    MENU LABEL oracle-linux-76
+    KERNEL oracle-installer/amd64/linux
+    APPEND vga=normal initrd=oracle-installer/amd64/initrd.gz auto=true interface=auto netcfg/dhcp_timeout=60 netcfg/choose_interface=auto
+    priority=critical preseed/file=/oracle-76.cfg IAPPEND 2
+
+LABEL vmware-installer/vmware-esxi-67-full
+    MENU LABEL vmware-installer/vmware-esxi-67 ^Installer
+    KERNEL vmware-esxi-67/mboot.c32
+    APPEND -c vmware-esxi-67/boot.cfg
