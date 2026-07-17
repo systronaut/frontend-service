@@ -52,7 +52,13 @@ class EsxiProvider(_CloudStub):
 class OpenstackProvider(_CloudStub):
     name = ProviderKind.OPENSTACK.value
     required_env = ("OS_AUTH_URL", "OS_USERNAME", "OS_PASSWORD", "OS_PROJECT_NAME")
-    sdk_hint = "openstacksdk (connection.compute.create_server)"
+    # NOTE: Nova instances do NOT PXE-boot, so OpenStack cannot reuse stage_host()
+    # like libvirt/proxmox/vSphere. It needs a different hardened-install path:
+    # a curated hardened base image + a config-drive/cloud-init payload that
+    # applies the CIS/NIS2 controls on first boot. That second install path is
+    # out of scope for this stub; see REQUIREMENTS.md ("OpenStack").
+    sdk_hint = ("openstacksdk (connection.compute.create_server) with a hardened "
+                "image + cloud-init rendering the compliance controls (no PXE)")
 
 
 # --- real vSphere adapter ----------------------------------------------------

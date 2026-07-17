@@ -2,4 +2,6 @@ Flask==3.0.3
 gunicorn==22.0.0
 requests==2.32.3
 pyvmomi==8.0.3.0.1          # vSphere (real) + ESXi adapter
+proxmoxer==2.0.1            # Proxmox VE adapter (real; REST API)
+libvirt-python==10.5.0     # libvirt/KVM adapter (real; needs system libvirt-dev + libvirt runtime)
 # openstacksdk==3.3.0       # OpenStack (uncomment when implementing that adapter)

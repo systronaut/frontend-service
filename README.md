@@ -29,10 +29,21 @@ It unifies three formerly separate pieces:
                 └───────────────────────────┘
 ```
 
-Providers are pluggable. **PXE** (bare-metal / any hypervisor via network boot)
-is fully implemented. **vSphere, ESXi, OpenStack** are first-class adapters with
-real contracts and credential surfaces, stubbed at the `create()` call (no fake
-successes) — see `control-plane/app/providers/cloud.py`.
+Providers are pluggable. All hypervisor adapters that can network-boot their
+guests share the same hardened PXE install path (`stage_host()`), so a VM ends up
+as hardened as a bare-metal host.
+
+| Provider | Status | Mechanism |
+|----------|--------|-----------|
+| **PXE** | real | proxyDHCP + iPXE, bare-metal / any hypervisor |
+| **vSphere** | real | pyVmomi → UEFI/Secure-Boot VM on the PXE port group |
+| **libvirt / KVM** | real | libvirt-python → OVMF/Secure-Boot domain on the PXE bridge |
+| **Proxmox VE** | real | proxmoxer REST → OVMF/Secure-Boot VM on the PXE bridge |
+| **ESXi** | stub | standalone host (pyVmomi) — real contract, `create()` stubbed |
+| **OpenStack** | stub | Nova can't PXE-boot; needs a hardened image + cloud-init (different path) |
+
+Requirements, credentials and the hardened-boot contract for each provider are in
+[`REQUIREMENTS.md`](REQUIREMENTS.md). Adapters live in `control-plane/app/providers/`.
 
 ## Compliance (must-have)
 
@@ -107,7 +118,11 @@ catalog). See `control-plane/app/catalog.py`.
 
 ## Implementing a cloud provider
 
-Drop the SDK call in `control-plane/app/providers/cloud.py` (pyVmomi for
-vSphere/ESXi, openstacksdk for OpenStack), set credentials in `.env`, flip
-`implemented = True`. Attach the new guest to the PXE network so it follows the
-same hardened install path as bare metal.
+Each adapter is one file in `control-plane/app/providers/` implementing the
+`Provider` interface (`preflight` / `create` / `status` / `destroy`) and
+registered in `providers/__init__.py`. For a network-boot backend, create the
+guest on the PXE segment, then call `stage_host(spec, compliance, mac=…)` and
+power on — that reuses the same hardened install path as bare metal (see
+`libvirt_provider.py` and `proxmox.py` for worked examples). Set credentials in
+`.env` and flip `implemented = True`. Full per-provider requirements are in
+[`REQUIREMENTS.md`](REQUIREMENTS.md).

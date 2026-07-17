@@ -8,7 +8,15 @@ ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 APP_VERSION=${APP_VERSION}
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# libvirt-python is a C extension: needs gcc/pkg-config/libvirt-dev to build and
+# the libvirt0 shared lib at runtime. Build, then drop build-only packages.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends gcc pkg-config libvirt-dev \
+    && pip install --no-cache-dir -r requirements.txt \
+    && apt-get purge -y gcc pkg-config libvirt-dev \
+    && apt-get install -y --no-install-recommends libvirt0 \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY app ./app
 COPY wsgi.py .

@@ -3,6 +3,8 @@
 
 from .base import Provider, ProviderResult, ProviderError, register, get, available
 from .pxe import PxeProvider
+from .libvirt_provider import LibvirtProvider
+from .proxmox import ProxmoxProvider
 from .cloud import VsphereProvider, EsxiProvider, OpenstackProvider
 
 _REGISTERED = False
@@ -14,6 +16,8 @@ def init_providers() -> None:
     if _REGISTERED:
         return
     register(PxeProvider())
+    register(LibvirtProvider())
+    register(ProxmoxProvider())
     register(VsphereProvider())
     register(EsxiProvider())
     register(OpenstackProvider())

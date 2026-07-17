@@ -7,11 +7,26 @@
 # scaffolded with the right shape + credential surface and raise NotImplemented
 # at the create step, so the contract is real even though the call is a stub.
 
+import hashlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from ..models import DeploymentSpec
 from ..security import ComplianceResult
+
+
+def derive_mac(seed: str) -> str:
+    """Deterministic, locally-administered unicast MAC for a hostname.
+
+    Hypervisor adapters that PXE-boot their guests assign this MAC at VM-create
+    time so the pxe-engine reservation and the guest agree without a post-create
+    read. Deterministic on the seed keeps create() idempotent: re-running for the
+    same hostname yields the same MAC (and thus the same reservation).
+    """
+    digest = hashlib.sha256(seed.encode("utf-8")).digest()
+    # First octet 0x02 -> locally administered, unicast (bit0=0, bit1=1).
+    octets = [0x02, *digest[:5]]
+    return ":".join(f"{o:02x}" for o in octets)
 
 
 @dataclass

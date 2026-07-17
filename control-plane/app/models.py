@@ -17,9 +17,11 @@ from . import security
 
 class Provider(str, Enum):
     PXE = "pxe"                 # bare-metal / any hypervisor via network boot (real)
-    VSPHERE = "vsphere"        # VMware vCenter (adapter, stubbed)
+    VSPHERE = "vsphere"        # VMware vCenter (adapter, real; PXE-staged)
+    LIBVIRT = "libvirt"        # KVM/QEMU via libvirt (adapter, real; PXE-staged)
+    PROXMOX = "proxmox"        # Proxmox VE (adapter, real; PXE-staged)
     ESXI = "esxi"             # standalone ESXi host (adapter, stubbed)
-    OPENSTACK = "openstack"    # OpenStack Nova (adapter, stubbed)
+    OPENSTACK = "openstack"    # OpenStack Nova (adapter, stubbed; image/cloud-init path)
 
 
 class DeploymentStatus(str, Enum):
