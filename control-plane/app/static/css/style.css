@@ -126,6 +126,32 @@ label { color: var(--ink); font-weight: 600; }
 .btn-primary:hover { background: var(--navy-2); border-color: var(--navy-2); color: #fff; }
 .btn-outline-light { border-color: #d7dde8; color: var(--ink); }
 .btn-outline-light:hover { background: var(--surface-2); color: var(--ink); }
+/* pink CTA -- the screenshot's "Add new Hypervisor" action */
+.btn-pink { background: #f0517a; border-color: #f0517a; color: #fff; padding: .5rem 1.3rem; }
+.btn-pink:hover { background: #e13a67; border-color: #e13a67; color: #fff; }
+
+/* ---------- navy stat bar (screenshot metrics row) ------------------------*/
+.statbar { background: var(--navy); border-radius: 16px; display: grid;
+  grid-template-columns: repeat(3, 1fr); padding: 1.35rem 1rem; margin: 1.25rem 0 1.5rem; }
+.statbar .stat { text-align: center; color: #fff; border-right: 1px solid rgba(255,255,255,.10); }
+.statbar .stat:last-child { border-right: 0; }
+.statbar .stat-label { font-weight: 700; letter-spacing: .02em; margin-bottom: .55rem;
+  display: inline-flex; align-items: center; gap: .4rem; }
+.statbar .stat-label svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; }
+.statbar .stat-value { display: inline-block; background: #fff; color: var(--navy); font-weight: 800;
+  border-radius: 8px; padding: .35rem 1.3rem; min-width: 90px; }
+
+/* ---------- segmented tab bar (screenshot detail tabs) --------------------*/
+.tabbar { display: flex; gap: 6px; background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+.tabbar a, .tabbar span.tab { flex: 1 1 0; text-align: center; padding: .6rem 1rem; border-radius: 8px;
+  color: var(--muted); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.tabbar a:hover { color: var(--ink); }
+.tabbar a.active, .tabbar span.tab.active { background: var(--accent); color: #fff; box-shadow: var(--shadow-sm); }
+
+/* status text colors (screenshot: green "Connected") */
+.status-ok { color: var(--ok); font-weight: 700; }
+.status-bad { color: var(--danger); font-weight: 700; }
 
 /* ---------- OS tiles (big cards, screenshot style) ------------------------*/
 .os-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }

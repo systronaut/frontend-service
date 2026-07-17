@@ -52,6 +52,7 @@ def index():
     deps = current_app.store.list(limit=10)
     return render_template("index.html", images=catalog.all_images(),
                            profiles=security.all_profiles(), recent=deps,
+                           providers_count=len(providers.available()),
                            role=session.get("role"))
 
 
