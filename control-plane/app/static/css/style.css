@@ -1,120 +1,140 @@
-/* Systronaut control plane -- brand layer over Bootstrap.
-   Keeps the original SYSTRONAUT jumbotron identity, adds a cohesive token set
-   and a control-room accent so it reads as a real product, not a template. */
+/* Systronaut control plane -- brand layer over Bootstrap 4.
+   Restores the ORIGINAL webapp look: light Bootstrap-4 surface, the SYSTRONAUT
+   jumbotron identity, and default primary buttons. The control plane's richer
+   pages (deploy, templates, compliance) inherit this same light theme so the
+   whole console reads like the original OSAAS / SYSTRONAUT generator, extended. */
 
 :root {
-  --brand-bg: #0e1726;
-  --brand-surface: #16213a;
-  --brand-surface-2: #1d2b48;
-  --brand-ink: #e8eef7;
-  --brand-muted: #95a6c2;
-  --brand-accent: #2dd4bf;        /* teal -- "go / secure" */
-  --brand-accent-2: #6366f1;      /* indigo */
-  --brand-danger: #f87171;
-  --brand-warn: #fbbf24;
-  --brand-ok: #34d399;
-  --radius: 12px;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
-  --space: clamp(1rem, 0.6rem + 1.5vw, 2rem);
+  --brand-ink: #212529;          /* Bootstrap 4 default body text */
+  --brand-muted: #6c757d;        /* text-muted */
+  --brand-primary: #007bff;      /* Bootstrap 4 primary blue (original btns) */
+  --brand-primary-dark: #0056b3;
+  --brand-surface: #ffffff;
+  --brand-surface-2: #f8f9fa;    /* light gray, like BS4 jumbotron */
+  --brand-border: #dee2e6;
+  --brand-danger: #dc3545;
+  --brand-warn: #ffc107;
+  --brand-ok: #28a745;
+  --brand-info: #17a2b8;
+  --radius: 6px;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 body {
-  background:
-    radial-gradient(1200px 600px at 80% -10%, rgba(99, 102, 241, 0.18), transparent 60%),
-    radial-gradient(900px 500px at -10% 10%, rgba(45, 212, 191, 0.12), transparent 55%),
-    var(--brand-bg);
+  background: #eef1f5;
   color: var(--brand-ink);
   min-height: 100vh;
-  font-feature-settings: "ss01", "cv01";
 }
 
-a { color: var(--brand-accent); }
-a:hover { color: #5eead4; }
+a { color: var(--brand-primary); }
+a:hover { color: var(--brand-primary-dark); }
 
+/* --- top navigation --------------------------------------------------------*/
 .navbar-systronaut {
-  background: rgba(13, 21, 38, 0.85);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  background: #ffffff;
+  border-bottom: 3px solid var(--brand-primary);
+  box-shadow: var(--shadow);
 }
 .navbar-systronaut .navbar-brand { font-weight: 800; letter-spacing: 0.14em; color: var(--brand-ink); }
-.navbar-systronaut .navbar-brand .dot { color: var(--brand-accent); }
+.navbar-systronaut .navbar-brand .dot { color: var(--brand-primary); }
 .navbar-systronaut .nav-link { color: var(--brand-muted); font-weight: 600; }
 .navbar-systronaut .nav-link:hover,
-.navbar-systronaut .nav-link.active { color: var(--brand-ink); }
+.navbar-systronaut .nav-link.active { color: var(--brand-primary); }
 
+/* --- SYSTRONAUT jumbotron (original identity) ------------------------------*/
 .hero {
-  background: linear-gradient(135deg, var(--brand-surface), var(--brand-surface-2));
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  background: var(--brand-surface-2);
+  border: 1px solid var(--brand-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: clamp(1.5rem, 1rem + 4vw, 3.5rem);
-  position: relative;
-  overflow: hidden;
+  padding: clamp(1.5rem, 1rem + 3vw, 3rem);
 }
 .hero h1 {
   font-weight: 800;
   letter-spacing: 0.18em;
-  font-size: clamp(2rem, 1rem + 5vw, 4rem);
+  font-size: clamp(2rem, 1rem + 4vw, 3.25rem);
   margin: 0;
+  color: var(--brand-ink);
 }
-.hero .tagline { color: var(--brand-muted); font-size: 1.1rem; margin-top: 0.5rem; }
+.hero .tagline {
+  color: var(--brand-muted);
+  font-size: 1.05rem;
+  margin-top: 0.4rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
 .hero .badge-std {
-  background: rgba(45, 212, 191, 0.14);
-  color: var(--brand-accent);
-  border: 1px solid rgba(45, 212, 191, 0.4);
+  background: #e7f1ff;
+  color: var(--brand-primary);
+  border: 1px solid var(--brand-primary);
   font-weight: 700; letter-spacing: 0.05em;
 }
 
+/* --- surfaces / cards ------------------------------------------------------*/
 .surface {
   background: var(--brand-surface);
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid var(--brand-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
 }
-.surface .card-header { background: transparent; border-bottom: 1px solid rgba(148,163,184,.14); font-weight: 700; }
-
-.card, .list-group-item, .table { color: var(--brand-ink); }
-.table { --bs-table-bg: transparent; color: var(--brand-ink); }
-.table thead th { color: var(--brand-muted); border-color: rgba(148,163,184,.18); font-weight: 700; text-transform: uppercase; font-size: .72rem; letter-spacing: .08em; }
-.table td, .table th { border-color: rgba(148,163,184,.12); }
-
-.form-control, .custom-select, select.form-control {
-  background: var(--brand-surface-2);
-  border: 1px solid rgba(148, 163, 184, 0.25);
+.surface .card-header {
+  background: transparent;
+  border-bottom: 2px solid var(--brand-border);
+  font-weight: 700;
   color: var(--brand-ink);
 }
-.form-control:focus { background: var(--brand-surface-2); color: var(--brand-ink);
-  border-color: var(--brand-accent); box-shadow: 0 0 0 0.2rem rgba(45,212,191,.18); }
-label { color: var(--brand-muted); font-weight: 600; }
 
-.btn-primary { background: var(--brand-accent); border-color: var(--brand-accent); color: #06231f; font-weight: 700; }
-.btn-primary:hover { background: #5eead4; border-color: #5eead4; color: #06231f; }
-.btn-outline-light { border-color: rgba(148,163,184,.4); color: var(--brand-ink); }
+.card, .list-group-item, .table { color: var(--brand-ink); }
+.table thead th {
+  color: var(--brand-muted); border-color: var(--brand-border); font-weight: 700;
+  text-transform: uppercase; font-size: .72rem; letter-spacing: .08em;
+}
+.table td, .table th { border-color: var(--brand-border); }
 
-/* OS tiles -- editorial selectable cards instead of a flat button row */
-.os-grid { display: grid; gap: 0.9rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+/* --- forms -----------------------------------------------------------------*/
+.form-control, .custom-select, select.form-control {
+  background: #ffffff;
+  border: 1px solid #ced4da;
+  color: var(--brand-ink);
+}
+.form-control:focus {
+  background: #ffffff; color: var(--brand-ink);
+  border-color: #80bdff; box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+label { color: var(--brand-ink); font-weight: 600; }
+
+/* --- buttons (original btn-primary blue) -----------------------------------*/
+.btn-primary { background: var(--brand-primary); border-color: var(--brand-primary); color: #fff; font-weight: 600; }
+.btn-primary:hover { background: var(--brand-primary-dark); border-color: var(--brand-primary-dark); color: #fff; }
+.btn-outline-light { border-color: #ced4da; color: var(--brand-ink); }
+.btn-outline-light:hover { background: #f1f3f5; color: var(--brand-ink); }
+
+/* --- OS tiles (selectable cards; echoes the original OS btn-group) ---------*/
+.os-grid { display: grid; gap: 0.75rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 .os-tile {
   display: block; cursor: pointer; padding: 1rem; border-radius: var(--radius);
-  background: var(--brand-surface-2); border: 1px solid rgba(148,163,184,.18);
-  transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
-  position: relative;
+  background: #ffffff; border: 1px solid var(--brand-border);
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+  position: relative; color: var(--brand-ink); text-decoration: none;
 }
-.os-tile:hover { transform: translateY(-2px); border-color: var(--brand-accent); box-shadow: var(--shadow); }
+.os-tile:hover { transform: translateY(-2px); border-color: var(--brand-primary); box-shadow: var(--shadow); }
 .os-tile input { position: absolute; opacity: 0; }
-.os-tile input:checked ~ .os-tile-body { outline: 2px solid var(--brand-accent); border-radius: 8px; padding: 2px; }
+.os-tile input:checked ~ .os-tile-body { outline: 2px solid var(--brand-primary); border-radius: 4px; padding: 2px; }
 .os-tile .os-name { font-weight: 700; }
 .os-tile .os-meta { color: var(--brand-muted); font-size: .85rem; }
-.os-tile .os-fam { font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--brand-accent); }
+.os-tile .os-fam { font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--brand-primary); }
 
+/* --- pills / chips ---------------------------------------------------------*/
 .pill { display: inline-block; padding: .15rem .55rem; border-radius: 999px; font-size: .72rem; font-weight: 700; letter-spacing: .04em; }
-.pill-ok { background: rgba(52,211,153,.16); color: var(--brand-ok); }
-.pill-warn { background: rgba(251,191,36,.16); color: var(--brand-warn); }
-.pill-danger { background: rgba(248,113,113,.16); color: var(--brand-danger); }
-.pill-info { background: rgba(99,102,241,.18); color: #a5b4fc; }
-.pill-muted { background: rgba(148,163,184,.16); color: var(--brand-muted); }
+.pill-ok { background: #d4edda; color: #155724; }
+.pill-warn { background: #fff3cd; color: #856404; }
+.pill-danger { background: #f8d7da; color: #721c24; }
+.pill-info { background: #d1ecf1; color: #0c5460; }
+.pill-muted { background: #e9ecef; color: var(--brand-muted); }
 
-.std-chip { font-size: .7rem; font-weight: 800; letter-spacing: .06em; padding: .12rem .5rem; border-radius: 6px;
-  background: rgba(45,212,191,.12); color: var(--brand-accent); border: 1px solid rgba(45,212,191,.35); }
+.std-chip {
+  font-size: .7rem; font-weight: 800; letter-spacing: .06em; padding: .12rem .5rem; border-radius: 4px;
+  background: #e7f1ff; color: var(--brand-primary); border: 1px solid var(--brand-primary);
+}
 
 .text-muted-2 { color: var(--brand-muted) !important; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
