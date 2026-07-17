@@ -20,6 +20,7 @@ class Provider(str, Enum):
     VSPHERE = "vsphere"        # VMware vCenter (adapter, real; PXE-staged)
     LIBVIRT = "libvirt"        # KVM/QEMU via libvirt (adapter, real; PXE-staged)
     PROXMOX = "proxmox"        # Proxmox VE (adapter, real; PXE-staged)
+    HYPERV = "hyperv"          # Microsoft Hyper-V via WinRM (adapter, real; PXE-staged)
     ESXI = "esxi"             # standalone ESXi host (adapter, stubbed)
     OPENSTACK = "openstack"    # OpenStack Nova (adapter, stubbed; image/cloud-init path)
 

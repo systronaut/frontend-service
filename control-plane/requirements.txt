@@ -3,6 +3,7 @@ gunicorn==22.0.0
 requests==2.32.3
 pyvmomi==8.0.3.0.1          # vSphere (real) + ESXi adapter
 proxmoxer==2.0.1            # Proxmox VE adapter (real; REST API)
+pypsrp==0.8.1              # Hyper-V adapter (real; WinRM/PowerShell, pure Python)
 # libvirt/KVM adapter (real, opt-in). libvirt-python is a C extension coupled to
 # the host libvirt version and slow to compile, so it is NOT installed by default.
 # Enable it by building the control-plane image with --build-arg ENABLE_LIBVIRT=1
