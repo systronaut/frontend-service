@@ -8,8 +8,9 @@
 # at the create step, so the contract is real even though the call is a stub.
 
 import hashlib
+import os
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ..models import DeploymentSpec
 from ..security import ComplianceResult
@@ -40,6 +41,36 @@ class ProviderResult:
 
 class ProviderError(RuntimeError):
     """Recoverable provider failure with a user-safe message."""
+
+
+@dataclass(frozen=True)
+class VmInfo:
+    """One guest as reported by a hypervisor."""
+
+    name: str
+    state: str = "unknown"     # running | stopped | unknown
+    vcpu: int = 0
+    memory_mb: int = 0
+    disk_gb: int = 0
+    ref: str = ""              # provider handle (vmid / uuid / moref)
+
+
+@dataclass(frozen=True)
+class HypervisorInventory:
+    """A hypervisor's capacity + the VMs on it, for the Hypervisors view."""
+
+    provider: str
+    endpoint: str              # host / URI shown in the table
+    connected: bool
+    cpu_total: int = 0         # logical cores
+    memory_mb: int = 0         # host RAM
+    storage_gb: int = 0        # host storage
+    vms: tuple[VmInfo, ...] = ()
+    message: str = ""          # error/context when not connected
+
+    @property
+    def running(self) -> int:
+        return sum(1 for v in self.vms if v.state == "running")
 
 
 class Provider(ABC):
