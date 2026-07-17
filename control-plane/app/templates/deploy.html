@@ -16,7 +16,7 @@
           {% for img in images %}
           <label class="os-tile mb-0">
             <input type="radio" name="os_key" value="{{ img.key }}" data-notes="{{ img.notes }}"
-                   {{ 'checked' if loop.first }} required>
+                   {{ 'checked' if (preselect and img.key == preselect) or (not preselect and loop.first) }} required>
             <div class="os-tile-body">
               <div class="os-fam">{{ img.family }}</div>
               <div class="os-name">{{ img.label }}</div>

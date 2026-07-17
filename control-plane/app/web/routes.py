@@ -8,7 +8,7 @@ from flask import (Blueprint, render_template, request, redirect, url_for,
 from ..auth import authenticate, login_required, current_actor, ROLE_ADMIN
 from ..models import DeploymentSpec
 from ..validators import ValidationError
-from .. import catalog, security, providers
+from .. import catalog, security, providers, answer_files
 
 web_bp = Blueprint("web", __name__)
 
@@ -58,12 +58,17 @@ def index():
 @web_bp.get("/deploy")
 @login_required()
 def deploy_form():
+    # Optional OS preselect (e.g. from the answer-file library "Deploy this OS").
+    preselect = request.args.get("os", "")
+    if not catalog.is_valid_key(preselect):
+        preselect = ""
     return render_template(
         "deploy.html",
         images=catalog.all_images(),
         profiles=security.all_profiles(),
         providers=providers.available(),
         default_profile=security.DEFAULT_PROFILE,
+        preselect=preselect,
         role=session.get("role"),
     )
 
@@ -109,6 +114,25 @@ def deployment_destroy(dep_id):
     current_app.deploy_service.destroy(dep, current_actor())
     flash(f"Deployment {dep_id} destroyed.", "warning")
     return redirect(url_for("web.deployments"))
+
+
+@web_bp.get("/templates")
+@login_required()
+def templates_library():
+    """Answer-file / provisioning-template library. Read-only, all users.
+
+    Renders the OS-grouped tree; an optional ?path=<rel> selects one file to
+    display inline (validated + confined by answer_files.read_file)."""
+    selected = None
+    rel = request.args.get("path", "")
+    if rel:
+        selected = answer_files.read_file(rel)
+        if selected is None:
+            flash("Answer file not found.", "warning")
+    return render_template("templates.html",
+                           groups=answer_files.list_groups(),
+                           selected=selected,
+                           role=session.get("role"))
 
 
 @web_bp.get("/compliance")

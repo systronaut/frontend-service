@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}Templates{% endblock %}
+{% block content %}
+<style>
+  .af-groups { max-height: 72vh; overflow-y: auto; }
+  .af-file { display:flex; justify-content:space-between; align-items:center;
+             padding:.35rem .5rem; border-radius:6px; text-decoration:none; }
+  .af-file:hover { background: rgba(127,127,127,.10); }
+  .af-file.active { background: rgba(127,127,127,.18); font-weight:600; }
+  .af-file .af-kind { font-size:.72rem; opacity:.7; }
+  .af-viewer pre { max-height:72vh; overflow:auto; padding:1rem; border-radius:8px;
+                   background: rgba(127,127,127,.08); white-space:pre; }
+  .af-osrow { display:flex; flex-wrap:wrap; gap:.35rem; margin:.25rem 0 .5rem; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-1">
+  <h3 class="mb-0">Provisioning templates</h3>
+  <a href="{{ url_for('web.deploy_form') }}" class="btn btn-primary btn-sm">New deployment</a>
+</div>
+<p class="text-muted-2 mb-3">
+  Read-only answer files (kickstart · preseed · autoinstall · autounattend · iPXE) served to
+  targets during install. This is exactly what gets provisioned — source of truth, viewable by
+  every user, editable by no one.
+</p>
+
+<div class="row">
+  <!-- left: OS-grouped file tree -->
+  <div class="col-lg-4">
+    <div class="surface p-3 af-groups">
+      {% for g in groups %}
+      <div class="mb-3">
+        <div class="card-header px-1 pb-1 mb-1 d-flex justify-content-between align-items-center">
+          <span>{{ g.title }}</span>
+          {% if g.os_refs %}
+          <a class="std-chip" href="{{ url_for('web.deploy_form', os=g.os_refs[0].key) }}"
+             title="Deploy {{ g.os_refs[0].label }}">DEPLOY</a>
+          {% endif %}
+        </div>
+        {% if g.os_refs %}
+        <div class="af-osrow">
+          {% for r in g.os_refs %}<span class="pill pill-info">{{ r.label }}</span>{% endfor %}
+        </div>
+        {% endif %}
+        {% for f in g.files %}
+        <a class="af-file {{ 'active' if selected and selected.relpath == f.path }}"
+           href="{{ url_for('web.templates_library', path=f.path) }}">
+          <span class="mono">{{ f.name }}</span>
+          <span class="af-kind">{{ f.kind }}</span>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="text-muted-2 mb-0">No answer-file tree mounted (PXE_LOOKUP_DIR).</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- right: file viewer -->
+  <div class="col-lg-8">
+    <div class="surface p-3 af-viewer">
+      {% if selected %}
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <div>
+            <span class="mono">{{ selected.relpath }}</span>
+            <span class="pill pill-muted ml-2">{{ selected.kind }}</span>
+          </div>
+          <span class="text-muted-2">{{ selected.size }} B</span>
+        </div>
+        {% if selected.is_binary %}
+          <p class="text-muted-2 mb-0">Binary file — not shown inline.</p>
+        {% elif selected.too_large %}
+          <p class="text-muted-2 mb-0">File too large to preview ({{ selected.size }} B).</p>
+        {% else %}
+          <pre class="mono">{{ selected.content }}</pre>
+        {% endif %}
+      {% else %}
+        <p class="text-muted-2 mb-0">Select a file on the left to view its contents.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

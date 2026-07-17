@@ -16,6 +16,7 @@
       <a class="nav-link {{ 'active' if request.path == '/' }}" href="{{ url_for('web.index') }}">Overview</a>
       <a class="nav-link {{ 'active' if request.path.startswith('/deploy') }}" href="{{ url_for('web.deploy_form') }}">Deploy</a>
       <a class="nav-link {{ 'active' if request.path.startswith('/deployments') }}" href="{{ url_for('web.deployments') }}">Deployments</a>
+      <a class="nav-link {{ 'active' if request.path.startswith('/templates') }}" href="{{ url_for('web.templates_library') }}">Templates</a>
       <a class="nav-link {{ 'active' if request.path == '/compliance' }}" href="{{ url_for('web.compliance') }}">Compliance</a>
       {% if session.get('role') == 'admin' %}
       <a class="nav-link {{ 'active' if request.path == '/audit' }}" href="{{ url_for('web.audit') }}">Audit</a>
@@ -47,7 +48,7 @@
 
 <footer class="site">
   <div class="container">
-    <small>Systronaut Deploy{% if version_info %} v{{ version_info.current }}{% endif %} · NIS2 &amp; ISO&nbsp;27001-aware VM provisioning · PXE / vSphere / ESXi / OpenStack</small>
+    <small>Systronaut Deploy{% if version_info %} v{{ version_info.current }}{% endif %} · NIS2 &amp; ISO&nbsp;27001-aware VM &amp; bare-metal provisioning · PXE / vSphere / libvirt / Proxmox / ESXi / OpenStack</small>
   </div>
 </footer>
 

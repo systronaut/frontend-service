@@ -94,6 +94,8 @@ docker compose up --build
 ```
 GET    /api/v1/health
 GET    /api/v1/catalog | /profiles | /providers
+GET    /api/v1/templates            # answer-file library, OS-grouped
+GET    /api/v1/templates/{path}     # one answer file (read-only, path-safe)
 POST   /api/v1/deployments          # create
 GET    /api/v1/deployments          # list
 GET    /api/v1/deployments/{id}     # status
@@ -101,6 +103,14 @@ GET    /api/v1/deployments/{id}/compliance
 DELETE /api/v1/deployments/{id}     # admin
 GET    /api/v1/audit                # admin
 ```
+
+### Templates (answer-file library)
+
+The console's **Templates** tab (and `GET /api/v1/templates`) exposes the exact
+kickstart / preseed / autoinstall / autounattend / iPXE files served during
+install — grouped per OS, viewable by every authenticated user, editable by none.
+The source of truth stays `ansible/roles/pxe/files` (mounted read-only); reads are
+path-traversal-safe, size-capped, and binary-aware.
 
 ## Supported operating systems
 

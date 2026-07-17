@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, request, current_app
 from ..auth import api_auth, current_actor, ROLE_ADMIN
 from ..models import DeploymentSpec
 from ..validators import ValidationError
-from .. import catalog, security, providers, version
+from .. import catalog, security, providers, version, answer_files
 
 api_bp = Blueprint("api", __name__)
 
@@ -44,6 +44,35 @@ def get_profiles():
                       for c in p.controls()]}
         for p in security.all_profiles()
     ]})
+
+
+@api_bp.get("/templates")
+@api_auth()
+def get_templates():
+    """The read-only answer-file library grouped by OS. Available to any
+    authenticated caller (operator or admin)."""
+    return jsonify({"groups": [
+        {"directory": g.directory, "title": g.title,
+         "os": [{"key": r.key, "label": r.label} for r in g.os_refs],
+         "files": [{"name": f.name, "path": f.relpath, "kind": f.kind,
+                    "syntax": f.syntax, "size": f.size, "binary": f.is_binary}
+                   for f in g.files]}
+        for g in answer_files.list_groups()
+    ]})
+
+
+@api_bp.get("/templates/<path:relpath>")
+@api_auth()
+def get_template_file(relpath):
+    """Raw content of one answer file (path-traversal-safe, size-capped)."""
+    view = answer_files.read_file(relpath)
+    if view is None:
+        return jsonify({"error": "not found"}), 404
+    return jsonify({
+        "path": view.relpath, "name": view.name, "kind": view.kind,
+        "syntax": view.syntax, "size": view.size, "binary": view.is_binary,
+        "too_large": view.too_large, "content": view.content,
+    })
 
 
 @api_bp.get("/providers")
