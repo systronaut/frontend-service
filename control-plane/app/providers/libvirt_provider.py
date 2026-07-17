@@ -181,6 +181,34 @@ class LibvirtProvider(Provider):
         finally:
             conn.close()
 
+    # -- inventory (Hypervisors view) ----------------------------------------
+    def inventory(self):
+        from .base import HypervisorInventory, VmInfo
+        try:
+            import libvirt
+            conn = self._connect()
+        except (ProviderError, ImportError) as exc:
+            return HypervisorInventory(provider=self.name, endpoint=self.uri,
+                                       connected=False, message=str(exc))
+        try:
+            vms = []
+            for dom in conn.listAllDomains():
+                info = dom.info()   # [state, maxMem KiB, memory, nrVirtCpu, cpuTime]
+                vms.append(VmInfo(
+                    name=dom.name(),
+                    state="running" if info[0] == libvirt.VIR_DOMAIN_RUNNING else "stopped",
+                    vcpu=int(info[3] or 0), memory_mb=int((info[1] or 0) // 1024),
+                    ref=dom.UUIDString()))
+            ni = conn.getInfo()     # [model, memoryMB, cpus, mhz, ...]
+            return HypervisorInventory(provider=self.name, endpoint=self.uri, connected=True,
+                                       cpu_total=int(ni[2] or 0), memory_mb=int(ni[1] or 0),
+                                       vms=tuple(vms))
+        except Exception as exc:
+            return HypervisorInventory(provider=self.name, endpoint=self.uri,
+                                       connected=False, message=str(exc))
+        finally:
+            conn.close()
+
     def destroy(self, provider_ref: str) -> ProviderResult:
         conn = self._connect()  # raises ProviderError if libvirt-python is absent
         import libvirt

@@ -5,6 +5,8 @@
 # a compliance control in its own right (ISO 27001 A.8.15 logging, NIS2 21(2)(g))
 # -- every state-changing action is recorded with actor, action and detail.
 
+from __future__ import annotations  # defer annotation eval (Store.list shadows builtin list)
+
 import json
 import sqlite3
 import threading
@@ -37,6 +39,17 @@ CREATE TABLE IF NOT EXISTS audit_log (
     action        TEXT NOT NULL,
     target        TEXT,
     detail        TEXT
+);
+CREATE TABLE IF NOT EXISTS hypervisors (
+    id            TEXT PRIMARY KEY,
+    name          TEXT NOT NULL,
+    kind          TEXT NOT NULL,      -- esxi | proxmox | libvirt | hyperv | vsphere
+    host          TEXT NOT NULL,
+    username      TEXT NOT NULL,
+    secret_enc    TEXT NOT NULL,      -- Fernet-encrypted password/token (never plaintext)
+    config        TEXT NOT NULL,      -- JSON: datastore/network/node/switch/...
+    created_by    TEXT NOT NULL,
+    created_at    TEXT NOT NULL
 );
 """
 
@@ -109,6 +122,50 @@ class Store:
                 "SELECT data FROM deployments ORDER BY created_at DESC LIMIT ?",
                 (limit,)).fetchall()
         return [_from_row(r) for r in rows]
+
+    # -- hypervisors ----------------------------------------------------------
+    def add_hypervisor(self, *, name: str, kind: str, host: str, username: str,
+                       secret_enc: str, config: dict, created_by: str) -> str:
+        hv_id = uuid.uuid4().hex[:12]
+        with self._lock:
+            self._conn.execute(
+                "INSERT INTO hypervisors "
+                "(id, name, kind, host, username, secret_enc, config, created_by, created_at) "
+                "VALUES (?,?,?,?,?,?,?,?,?)",
+                (hv_id, name, kind, host, username, secret_enc,
+                 json.dumps(config), created_by, _now()),
+            )
+            self._conn.commit()
+        return hv_id
+
+    def list_hypervisors(self) -> list[dict]:
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT id, name, kind, host, username, secret_enc, config, created_by, created_at "
+                "FROM hypervisors ORDER BY created_at DESC").fetchall()
+        return [_hv_row(r) for r in rows]
+
+    def get_hypervisor(self, hv_id: str) -> Optional[dict]:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT id, name, kind, host, username, secret_enc, config, created_by, created_at "
+                "FROM hypervisors WHERE id=?", (hv_id,)).fetchone()
+        return _hv_row(row) if row else None
+
+    def delete_hypervisor(self, hv_id: str) -> None:
+        with self._lock:
+            self._conn.execute("DELETE FROM hypervisors WHERE id=?", (hv_id,))
+            self._conn.commit()
+
+
+def _hv_row(row) -> dict:
+    """Row -> dict; secret stays encrypted (secret_enc) and is never returned plain."""
+    d = dict(row)
+    try:
+        d["config"] = json.loads(d.get("config") or "{}")
+    except (ValueError, TypeError):
+        d["config"] = {}
+    return d
 
 
 def _from_row(row) -> Deployment:

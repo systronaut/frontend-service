@@ -11,7 +11,8 @@
 
 import os
 
-from .base import Provider, ProviderResult, ProviderError
+from .base import (Provider, ProviderResult, ProviderError,
+                   HypervisorInventory, VmInfo)
 from .pxe import stage_host
 from ..models import DeploymentSpec, Provider as ProviderKind
 from ..security import ComplianceResult
@@ -41,12 +42,6 @@ class _CloudStub(Provider):
 
     def destroy(self, provider_ref: str) -> ProviderResult:
         raise NotImplementedError(f"{self.name} destroy is not implemented yet.")
-
-
-class EsxiProvider(_CloudStub):
-    name = ProviderKind.ESXI.value
-    required_env = ("ESXI_HOST", "ESXI_USER", "ESXI_PASSWORD")
-    sdk_hint = "pyVmomi against a standalone host (HostSystem / CreateVM_Task)"
 
 
 class OpenstackProvider(_CloudStub):
@@ -234,6 +229,48 @@ class VsphereProvider(Provider):
                                       message="VM destroyed.")
         raise ProviderError(f"VM {provider_ref!r} not found.")
 
+    # -- inventory (Hypervisors view) ----------------------------------------
+    def inventory(self) -> HypervisorInventory | None:
+        try:
+            from pyVmomi import vim
+        except ImportError:
+            return HypervisorInventory(provider=self.name, endpoint=self.host,
+                                       connected=False, message="pyVmomi not installed")
+        try:
+            si = self._connect()
+            content = si.RetrieveContent()
+        except ProviderError as exc:
+            return HypervisorInventory(provider=self.name, endpoint=self.host,
+                                       connected=False, message=str(exc))
+        vms: list[VmInfo] = []
+        for vm in self._all(content, vim.VirtualMachine):
+            try:
+                cfg, rt = vm.summary.config, vm.summary.runtime
+                committed = getattr(vm.summary.storage, "committed", 0) or 0
+                vms.append(VmInfo(
+                    name=cfg.name or "vm",
+                    state="running" if rt.powerState == "poweredOn" else "stopped",
+                    vcpu=int(cfg.numCpu or 0), memory_mb=int(cfg.memorySizeMB or 0),
+                    disk_gb=int(committed // (1024 ** 3)), ref=vm._moId))
+            except Exception:
+                continue
+        cpu_total = mem_mb = storage_gb = 0
+        for host in self._all(content, vim.HostSystem):
+            try:
+                hw = host.hardware
+                cpu_total += int(getattr(hw.cpuInfo, "numCpuThreads", 0) or 0)
+                mem_mb += int((hw.memorySize or 0) // (1024 * 1024))
+            except Exception:
+                continue
+        for ds in self._all(content, vim.Datastore):
+            try:
+                storage_gb += int((ds.summary.capacity or 0) // (1024 ** 3))
+            except Exception:
+                continue
+        return HypervisorInventory(provider=self.name, endpoint=self.host, connected=True,
+                                   cpu_total=cpu_total, memory_mb=mem_mb, storage_gb=storage_gb,
+                                   vms=tuple(vms))
+
     # -- low-level helpers ----------------------------------------------------
     @staticmethod
     def _wait(task):
@@ -264,3 +301,27 @@ class VsphereProvider(Provider):
     def _first_resource_pool(self, content):
         from pyVmomi import vim
         return next(iter(self._all(content, vim.ResourcePool)), None)
+
+
+# --- real standalone ESXi adapter -------------------------------------------
+class EsxiProvider(VsphereProvider):
+    """Standalone ESXi host (no vCenter). Reuses every pyVmomi path from the
+    vSphere adapter but connects straight to the host, defaults to the single
+    'ha-datacenter', and trusts the host's self-signed cert by default."""
+
+    name = ProviderKind.ESXI.value
+    implemented = True
+    required_env = ("ESXI_HOST", "ESXI_USER", "ESXI_PASSWORD")
+
+    def __init__(self):
+        self.host = os.environ.get("ESXI_HOST", "")
+        self.user = os.environ.get("ESXI_USER", "")
+        self.password = os.environ.get("ESXI_PASSWORD", "")
+        self.datacenter = os.environ.get("ESXI_DATACENTER", "ha-datacenter")
+        self.cluster = ""                       # standalone: use the host's pool
+        self.datastore = os.environ.get("ESXI_DATASTORE", "")
+        self.network = os.environ.get("ESXI_NETWORK", "")
+        self.folder = ""
+        # ESXi ships a self-signed cert; default to skipping verification. Set
+        # ESXI_INSECURE=0 once you have added the host CA to the trust store.
+        self.insecure = os.environ.get("ESXI_INSECURE", "1") == "1"

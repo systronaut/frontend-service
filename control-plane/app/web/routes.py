@@ -8,7 +8,7 @@ from flask import (Blueprint, render_template, request, redirect, url_for,
 from ..auth import authenticate, login_required, current_actor, ROLE_ADMIN
 from ..models import DeploymentSpec
 from ..validators import ValidationError
-from .. import catalog, security, providers, answer_files
+from .. import catalog, security, providers, answer_files, crypto, hypervisors
 
 web_bp = Blueprint("web", __name__)
 
@@ -134,6 +134,84 @@ def templates_library():
                            groups=answer_files.list_groups(),
                            selected=selected,
                            role=session.get("role"))
+
+
+@web_bp.get("/hypervisors")
+@login_required()
+def hypervisors_list():
+    records = current_app.store.list_hypervisors()
+    invs = [(r, hypervisors.inventory_for(r)) for r in records]
+    connected = [i for _, i in invs if i.connected]
+    totals = {
+        "count": len(records),
+        "connected": len(connected),
+        "memory_mb": sum(i.memory_mb for i in connected),
+        "storage_gb": sum(i.storage_gb for i in connected),
+        "vms": sum(len(i.vms) for i in connected),
+    }
+    return render_template("hypervisors.html", invs=invs, totals=totals,
+                           role=session.get("role"))
+
+
+@web_bp.get("/hypervisors/add")
+@login_required()
+def hypervisor_add_form():
+    return render_template("hypervisor_add.html", kinds=hypervisors.KINDS,
+                           role=session.get("role"))
+
+
+@web_bp.post("/hypervisors/add")
+@login_required()
+def hypervisor_add():
+    f = request.form
+    kind = f.get("kind", "")
+    if kind not in hypervisors.KINDS:
+        flash("Unknown hypervisor kind.", "danger")
+        return redirect(url_for("web.hypervisor_add_form"))
+    name = f.get("name", "").strip()
+    host = f.get("host", "").strip()
+    user = f.get("username", "").strip()
+    password = f.get("password", "")
+    if not (name and host and user):
+        flash("Name, host and username are required.", "danger")
+        return redirect(url_for("web.hypervisor_add_form"))
+    cfg: dict = {}
+    for key, _label, _req in hypervisors.KINDS[kind]["fields"]:
+        val = f.get(f"cfg_{key}", "").strip()
+        if val:
+            cfg[key] = val
+    if f.get("cfg_insecure"):
+        cfg["insecure"] = "1"
+    # Secret is encrypted before it ever touches the DB (see crypto.py).
+    hv_id = current_app.store.add_hypervisor(
+        name=name, kind=kind, host=host, username=user,
+        secret_enc=crypto.encrypt(password), config=cfg, created_by=current_actor())
+    current_app.store.audit(current_actor(), "hypervisor.add", hv_id, f"{kind} {host}")
+    flash(f"Hypervisor '{name}' added.", "success")
+    return redirect(url_for("web.hypervisor_detail", hv_id=hv_id))
+
+
+@web_bp.get("/hypervisors/<hv_id>")
+@login_required()
+def hypervisor_detail(hv_id):
+    rec = current_app.store.get_hypervisor(hv_id)
+    if not rec:
+        abort(404)
+    inv = hypervisors.inventory_for(rec)
+    return render_template("hypervisor_detail.html", hv=rec, inv=inv,
+                           role=session.get("role"))
+
+
+@web_bp.post("/hypervisors/<hv_id>/delete")
+@login_required()
+def hypervisor_delete(hv_id):
+    rec = current_app.store.get_hypervisor(hv_id)
+    if not rec:
+        abort(404)
+    current_app.store.delete_hypervisor(hv_id)
+    current_app.store.audit(current_actor(), "hypervisor.delete", hv_id, rec.get("host", ""))
+    flash("Hypervisor removed.", "warning")
+    return redirect(url_for("web.hypervisors_list"))
 
 
 @web_bp.get("/compliance")

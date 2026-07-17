@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Add hypervisor{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Add a hypervisor</h4>
+  <a href="{{ url_for('web.hypervisors_list') }}" class="text-muted-2">&larr; Cancel</a>
+</div>
+
+<form method="post" action="{{ url_for('web.hypervisor_add') }}">
+  <div class="row">
+    <div class="col-lg-7">
+      <div class="surface p-3 mb-4">
+        <div class="card-header px-2 pb-2 mb-3">Connection</div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Name</label>
+            <input name="name" class="form-control" placeholder="pve-fra-01" required>
+          </div>
+          <div class="form-group col-md-6">
+            <label>Type</label>
+            <select name="kind" class="form-control" required>
+              {% for key, meta in kinds.items() %}
+              <option value="{{ key }}">{{ meta.label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Host / endpoint</label>
+          <input name="host" class="form-control" placeholder="10.10.0.5  (libvirt: qemu+ssh://host/system)" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Username</label>
+            <input name="username" class="form-control" placeholder="root" required autocomplete="off">
+          </div>
+          <div class="form-group col-md-6">
+            <label>Password / token</label>
+            <input name="password" type="password" class="form-control" autocomplete="new-password">
+          </div>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="cfg_insecure" id="cfg_insecure" checked>
+          <label class="form-check-label" for="cfg_insecure">Trust self-signed TLS (ESXi/Proxmox/Hyper-V dev)</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="surface p-3 mb-4">
+        <div class="card-header px-2 pb-2 mb-3">Placement (optional)</div>
+        <p class="text-muted-2" style="font-size:.82rem">Only the fields for the chosen type are used; the rest are ignored. Needed for <em>creating</em> VMs; inventory works without them.</p>
+        {% set hints = {
+          'cfg_datacenter': 'Datacenter — vSphere (ESXi: ha-datacenter)',
+          'cfg_datastore':  'Datastore — ESXi / vSphere',
+          'cfg_network':    'VM network / port group — ESXi / vSphere / libvirt',
+          'cfg_cluster':    'Cluster — vSphere',
+          'cfg_node':       'Node — Proxmox (required for inventory)',
+          'cfg_storage':    'Storage — Proxmox',
+          'cfg_bridge':     'Bridge — Proxmox / libvirt',
+          'cfg_pool':       'Storage pool — libvirt',
+          'cfg_switch':     'Virtual switch — Hyper-V',
+          'cfg_vhd_path':   'VHD path — Hyper-V' } %}
+        {% for field, hint in hints.items() %}
+        <div class="form-group mb-2">
+          <input name="{{ field }}" class="form-control form-control-sm" placeholder="{{ hint }}">
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Add &amp; connect</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Hypervisors{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-1">
+  <h4 class="mb-0 d-flex align-items-center" style="gap:.5rem">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/></svg>
+    Hypervisors
+  </h4>
+  <a class="btn btn-pink" href="{{ url_for('web.hypervisor_add_form') }}">+ Add new hypervisor</a>
+</div>
+
+<div class="statbar">
+  <div class="stat">
+    <div class="stat-label">Hypervisors</div>
+    <div class="stat-value">{{ totals.connected }}/{{ totals.count }}</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Memory</div>
+    <div class="stat-value">{{ (totals.memory_mb / 1024)|round(0, 'floor')|int }} GB</div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Storage</div>
+    <div class="stat-value">{{ totals.storage_gb }} GB</div>
+  </div>
+</div>
+
+<div class="surface p-3">
+  {% if invs %}
+  <table class="table mb-0">
+    <thead><tr><th>Hypervisor</th><th>Type</th><th>Connection</th><th>Machines</th><th></th></tr></thead>
+    <tbody>
+      {% for hv, inv in invs %}
+      <tr>
+        <td><a class="mono" href="{{ url_for('web.hypervisor_detail', hv_id=hv.id) }}">{{ hv.name }}</a>
+            <div class="text-muted-2 mono" style="font-size:.8rem">{{ hv.host }}</div></td>
+        <td><span class="pill pill-muted">{{ hv.kind }}</span></td>
+        <td>
+          {% if inv.connected %}<span class="status-ok">● Connected</span>
+          {% else %}<span class="status-bad">● {{ inv.message or 'not connected' }}</span>{% endif %}
+        </td>
+        <td>{{ inv.vms|length if inv.connected else '—' }}</td>
+        <td class="text-right">
+          <form method="post" action="{{ url_for('web.hypervisor_delete', hv_id=hv.id) }}"
+                onsubmit="return confirm('Remove {{ hv.name }}?')" style="display:inline">
+            <button class="btn btn-outline-light btn-sm" type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted-2 mb-0">No hypervisors yet. Click <strong>Add new hypervisor</strong> to connect one
+    (ESXi, vCenter, Proxmox, libvirt/KVM or Hyper-V) and see its VMs.</p>
+  {% endif %}
+</div>
+{% endblock %}

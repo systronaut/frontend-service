@@ -12,7 +12,8 @@
 
 import os
 
-from .base import Provider, ProviderResult, ProviderError, derive_mac
+from .base import (Provider, ProviderResult, ProviderError, derive_mac,
+                   HypervisorInventory, VmInfo)
 from .pxe import stage_host
 from ..models import DeploymentSpec, Provider as ProviderKind
 from ..security import ComplianceResult
@@ -159,3 +160,36 @@ class ProxmoxProvider(Provider):
         if len(parts) != 2 or not parts[1].isdigit():
             return provider_ref, None
         return parts[0], int(parts[1])
+
+    # -- inventory (Hypervisors view) ----------------------------------------
+    def inventory(self) -> HypervisorInventory | None:
+        if not (self.host and self.node):
+            return None
+        try:
+            prox = self._connect()
+            node = prox.nodes(self.node)
+            st = node.status.get()
+            vms = [
+                VmInfo(
+                    name=vm.get("name") or str(vm.get("vmid")),
+                    state="running" if vm.get("status") == "running" else "stopped",
+                    vcpu=int(vm.get("cpus", 0) or 0),
+                    memory_mb=int((vm.get("maxmem", 0) or 0) // (1024 * 1024)),
+                    disk_gb=int((vm.get("maxdisk", 0) or 0) // (1024 ** 3)),
+                    ref=str(vm.get("vmid")))
+                for vm in node.qemu.get()
+            ]
+        except (ProviderError, Exception) as exc:
+            return HypervisorInventory(provider=self.name, endpoint=self.host,
+                                       connected=False, message=str(exc))
+        cpu_total = int((st.get("cpuinfo", {}) or {}).get("cpus", 0) or 0)
+        mem_total = int(((st.get("memory", {}) or {}).get("total", 0) or 0) // (1024 * 1024))
+        storage_gb = 0
+        try:
+            for s in node.storage.get():
+                storage_gb += int((s.get("total", 0) or 0) // (1024 ** 3))
+        except Exception:
+            pass
+        return HypervisorInventory(
+            provider=self.name, endpoint=f"{self.host} ({self.node})", connected=True,
+            cpu_total=cpu_total, memory_mb=mem_total, storage_gb=storage_gb, vms=tuple(vms))

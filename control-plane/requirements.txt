@@ -1,6 +1,7 @@
 Flask==3.0.3
 gunicorn==22.0.0
 requests==2.32.3
+cryptography==42.0.8       # Fernet -- encrypt hypervisor credentials at rest
 pyvmomi==8.0.3.0.1          # vSphere (real) + ESXi adapter
 proxmoxer==2.0.1            # Proxmox VE adapter (real; REST API)
 pypsrp==0.8.1              # Hyper-V adapter (real; WinRM/PowerShell, pure Python)
