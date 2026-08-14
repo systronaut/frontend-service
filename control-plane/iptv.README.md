@@ -6,8 +6,24 @@ sondern aus der Roh-Playlist des Providers erzeugt:
 ```bash
 curl -sSL -o /tmp/epg.xml "https://epg.best/24129-yquxim.xml"
 python3 control-plane/tools/build_iptv.py \
-  --src ~/Downloads/tv_channels_6563139079_plus.m3u \
+  --src ~/Downloads/tv_channels_6563139079_plus-2.m3u \
   --epg-xml /tmp/epg.xml
+```
+
+## Portal-Hosts
+
+Der Provider liefert dieselbe Playlist über mehrere Portal-Hostnamen. Beide getestet,
+beide liefern identische Redirect-Ziele — der Hostname ist nur der Einstiegspunkt:
+
+| Portal | CNAME | IP | Stand |
+|---|---|---|---|
+| `mththbvn.hubryljoy.com:88` | `cdn.edgeroutehub.com` | 149.18.45.152 | **aktuell in `iptv.m3u`** |
+| `cjtwpzun.sqhsm.com:88` | `edge.noderoute.net` | 149.18.45.171 | funktioniert weiterhin (Fallback) |
+
+Portal wechseln = Playlist mit der anderen `--src` neu bauen, oder direkt ersetzen:
+
+```bash
+sed -i '' 's#mththbvn\.hubryljoy\.com#cjtwpzun.sqhsm.com#g' control-plane/iptv.m3u
 ```
 
 ## Was gefiltert wird
