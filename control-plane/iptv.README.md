@@ -74,12 +74,29 @@ Portal-Host freizugeben reicht nicht.
 
 | Ziel | Port | Zweck |
 |---|---|---|
-| `cjtwpzun.sqhsm.com` (CNAME `edge.noderoute.net`) | TCP 88 | Portal / Stream-Request |
-| `5710425.*.cc` — Muster `c##s.cc`, `w##s.cc`, `s##s.cc`, `j##m.cc`, `t##m.cc`, `m##vn.cc` | TCP 80 | Video-Edges (Redirect-Ziel) |
+| `mththbvn.hubryljoy.com` + `cjtwpzun.sqhsm.com` | TCP 88 | Portal / Stream-Request |
+| `5710425.*.cc` — 71 Domains, siehe `iptv-edge-hosts.txt` | TCP 80 | Video-Edges (Redirect-Ziel) |
+| `154.6.144.132` | TCP 80 | einziges Edge-Ziel ohne DNS-Namen |
 | `epg.best` | TCP 443 | EPG-XML |
 | `lo1.in` | TCP 443 | Sender-Logos |
+
+Alle 2.723 Sender wurden einzeln angefragt. Ergebnis: **72 eindeutige Edge-Hosts**,
+Subdomain immer die Account-ID `5710425`, Parent-Domains in sechs Mustern:
+
+```
+c22s–c29s.cc   s01s–s10s.cc / s15q.cc   w11s–w20s.cc
+j01m–j20m.cc   t01m–t08m.cc / t11m / t48m / t73m.cc   m01vn–m10vn.cc
+zusätzlich: f2k1g.cc, qd02v/qd04v/qd07v/qd10v.cc, zv26t.cc
+```
+
+Vollständige Listen:
+* `iptv-edge-hosts.txt` — alle Hostnamen + Parent-Domains für Wildcard-Regeln
+* `iptv-redirects.tsv` — Sender → Portal-URL → Redirect-URL, eine Zeile pro Sender
 
 Die Edge-IPs liegen in unzusammenhängenden Netzen mehrerer Provider
 (45.155.227.0/24, 45.155.90.0/24, 154.6.144.0/24, 154.6.18.0/23, 149.57.136.0/24 …)
 und rotieren — eine IP-Allowlist ist nicht haltbar. Entweder FQDN-/Wildcard-Regeln
 verwenden oder die Regel am Client festmachen (IPTV-Box/VLAN darf TCP 80+88 raus).
+
+> Die `?token=…` in `iptv-redirects.tsv` sind **kurzlebig** und pro Request neu.
+> Für die Firewall zählt nur der Hostname, nicht die vollständige URL.
