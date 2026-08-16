@@ -3,9 +3,15 @@
 # persisted, audited, provider-staged deployment. Both the web UI and the REST
 # API funnel through here so behaviour and audit trail stay identical.
 
+import logging
+
 from . import providers
-from .models import DeploymentSpec, Deployment, DeploymentStatus
+from .models import DeploymentSpec, Deployment, DeploymentStatus, Provider
+from .providers.base import derive_mac
+from .providers.pxe import unstage_host
 from .store import Store
+
+log = logging.getLogger(__name__)
 
 
 class DeployService:
@@ -71,5 +77,25 @@ class DeployService:
         except (providers.ProviderError, NotImplementedError) as exc:
             dep.touch(DeploymentStatus.FAILED, f"destroy failed: {exc}")
             self.store.audit(actor, "deployment.destroy_failed", dep.id, str(exc))
+        # Scrub PXE-rendered answers (Windows autounattend plaintext etc.).
+        # PXE provider.destroy already DELETEs by MAC; this covers HV adapters
+        # and is idempotent when the engine already purged the host.
+        self._scrub_pxe_artifacts(dep)
         self.store.save(dep)
         return dep
+
+    @staticmethod
+    def _scrub_pxe_artifacts(dep: Deployment) -> None:
+        """Best-effort removal of engine host/<slug>/ after destroy."""
+        if dep.spec.provider == Provider.OPENSTACK:
+            return  # OpenStack never stages on the PXE engine
+        mac = ""
+        if dep.spec.provider == Provider.PXE:
+            mac = dep.provider_ref or dep.spec.network.mac or ""
+        else:
+            mac = dep.spec.network.mac or derive_mac(dep.spec.hostname)
+        try:
+            unstage_host(mac=mac, hostname=dep.spec.hostname)
+        except providers.ProviderError as exc:
+            log.warning("PXE artifact scrub after destroy failed for %s: %s",
+                        dep.id, exc)

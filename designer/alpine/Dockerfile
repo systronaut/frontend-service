@@ -1,4 +1,6 @@
-FROM openjdk:8-alpine AS build
+# openjdk:8-alpine removed from Docker Hub; Corretto 8 Alpine is the
+# maintained drop-in for ant war builds (apk + JDK 8, arm64/amd64).
+FROM amazoncorretto:8-alpine3.18 AS build
 
 RUN apk update --no-cache && \
     apk add --no-cache \

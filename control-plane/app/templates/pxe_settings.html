@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}PXE infra{% endblock %}
+{% block content %}
+{# Caller: web.routes.pxe_settings → render_template('pxe_settings.html') #}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">PXE infrastructure</h3>
+  <span class="pill pill-muted">read-only · from env</span>
+</div>
+
+<div class="surface p-3 mb-4">
+  <div class="card-header px-2 pb-2 mb-3">LAN / proxyDHCP (pxe-engine)</div>
+  <table class="table mb-0">
+    <tbody>
+      <tr><th style="width:40%">PXE host IP</th><td class="mono">{{ pxe.host_ip or '—' }}</td></tr>
+      <tr><th>Interface</th><td class="mono">{{ pxe.interface or '—' }}</td></tr>
+      <tr><th>Subnet</th><td class="mono">{{ pxe.subnet or '—' }}</td></tr>
+      <tr><th>Boot file</th><td class="mono">{{ pxe.bootfile or '—' }}</td></tr>
+      <tr><th>Engine URL</th><td class="mono">{{ pxe.engine_url or '—' }}</td></tr>
+    </tbody>
+  </table>
+  <p class="os-meta mb-0 mt-3">
+    Values come from the host environment (<code>PXE_HOST_IP</code>, <code>PXE_INTERFACE</code>,
+    <code>PXE_SUBNET</code>, <code>PXE_BOOTFILE</code>, <code>PXE_ENGINE_URL</code>).
+    Change them in <code>.env</code> and restart the stack — not editable here (keeps L2 config out of the DB).
+  </p>
+</div>
+{% endblock %}

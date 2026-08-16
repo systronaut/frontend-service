@@ -1,12 +1,16 @@
 #!ipxe
-
 set base-url http://{{ host_ip }}/windows/wim
-
+{% if have_answer %}
+set unattend_url {{ answer_url }}/{{ answer_name }}
+set samba_url {{ answer_url }}/pxe_samba.txt
+{% else %}
+set unattend_url ${base-url}/pxe_autounattend.xml
+set samba_url ${base-url}/pxe_samba.txt
+{% endif %}
 kernel ${base-url}/wimboot
 initrd ${base-url}/bootmgr
 initrd ${base-url}/bootmgr.efi
 initrd ${base-url}/boot.wim
-initrd ${base-url}/pxe_samba.txt pxe_samba.txt
-initrd ${base-url}/pxe_autounattend.xml pxe_autounattend.xml
-
+initrd ${samba_url} pxe_samba.txt
+initrd ${unattend_url} pxe_autounattend.xml
 boot

@@ -1,11 +1,11 @@
 #!ipxe
-
+# Ansible Vorlage — per-host AutoYaST when control plane sets have_answer.
+# TLS verify skip only when sles_insecure (PXE_SLES_INSECURE=1) for HTTP lab.
 set base-url http://{{ host_ip }}/sles157
-
-kernel ${base-url}/boot/x86_64/loader/linux install=${base-url}/ autoyast=${base-url}/sles15sp7.xml insecure=1
-
+{% if have_answer %}
+kernel ${base-url}/boot/x86_64/loader/linux install=${base-url}/ autoyast={{ answer_url }}/{{ answer_name }}{% if sles_insecure %} insecure=1{% endif %}
+{% else %}
+kernel ${base-url}/boot/x86_64/loader/linux install=${base-url}/ autoyast=${base-url}/sles15sp7.xml{% if sles_insecure %} insecure=1{% endif %}
+{% endif %}
 initrd ${base-url}/boot/x86_64/loader/initrd
-
 boot
-
-

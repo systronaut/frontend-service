@@ -1,9 +1,10 @@
 #!ipxe
-
+# Ansible Vorlage — per-host answer when control plane sets have_answer.
 set base-url http://{{ host_ip }}/rocky97
-
+{% if have_answer %}
+kernel ${base-url}/images/pxeboot/vmlinuz inst.repo=${base-url}/ inst.ks={{ answer_url }}/{{ answer_name }}
+{% else %}
 kernel ${base-url}/images/pxeboot/vmlinuz inst.repo=${base-url}/ inst.ks=${base-url}/rocky97_ks.cfg
-
+{% endif %}
 initrd ${base-url}/images/pxeboot/initrd.img
-
 boot

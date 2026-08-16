@@ -14,7 +14,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
-from .models import Deployment, DeploymentSpec, DeploymentStatus, NetworkSpec, Provider
+from .models import Deployment, DeploymentSpec, DeploymentStatus, NetworkSpec, Provider, InstallSettings
 
 
 def _now() -> str:
@@ -173,10 +173,25 @@ def _from_row(row) -> Deployment:
     d = json.loads(row["data"])
     s = d["spec"]
     net = NetworkSpec(**s["network"])
+    # Older rows lack install; secrets were never persisted in public_dict.
+    raw_install = s.get("install") or {}
+    install = InstallSettings(
+        timezone=raw_install.get("timezone", "Etc/UTC"),
+        locale=raw_install.get("locale", "en_US.UTF-8"),
+        keyboard=raw_install.get("keyboard", "us"),
+        admin_user=raw_install.get("admin_user", "systronaut"),
+        disk_device=raw_install.get("disk_device", "sda"),
+        ntp_server=raw_install.get("ntp_server", ""),
+        package_role=raw_install.get("package_role", "minimal"),
+        workgroup=raw_install.get("workgroup", "WORKGROUP"),
+        samba_share=raw_install.get("samba_share", r"share\win2022"),
+        # Secrets not round-tripped from public_dict — empty on reload.
+    )
     spec = DeploymentSpec(
         hostname=s["hostname"], os_key=s["os_key"],
         provider=Provider(s["provider"]), security_profile=s["security_profile"],
-        network=net, cpu=s["cpu"], memory_mb=s["memory_mb"], disk_gb=s["disk_gb"],
+        network=net, install=install,
+        cpu=s["cpu"], memory_mb=s["memory_mb"], disk_gb=s["disk_gb"],
         requested_by=s.get("requested_by", "unknown"),
     )
     return Deployment(

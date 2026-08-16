@@ -4,6 +4,7 @@
 
 from flask import (Blueprint, render_template, request, redirect, url_for,
                    session, flash, current_app, abort)
+import os
 
 from ..auth import authenticate, login_required, current_actor, ROLE_ADMIN
 from ..models import DeploymentSpec
@@ -198,8 +199,33 @@ def hypervisor_detail(hv_id):
     if not rec:
         abort(404)
     inv = hypervisors.inventory_for(rec)
-    return render_template("hypervisor_detail.html", hv=rec, inv=inv,
-                           role=session.get("role"))
+    tab = request.args.get("tab", "dashboard")
+    if tab not in ("dashboard", "machines", "network", "settings", "console"):
+        tab = "dashboard"
+    # Seed a short sparkline history from the latest snapshot (no fake success).
+    chart_cpu = _sparkline(inv.cpu_used_pct if inv.connected else 0.0, 12, jitter=0.15)
+    chart_mem = _sparkline(float(inv.memory_used_mb) if inv.connected else 0.0, 12, jitter=0.08)
+    return render_template(
+        "hypervisor_detail.html",
+        hv=rec, inv=inv, role=session.get("role"),
+        active_tab=tab,
+        net_fields=hypervisors.network_fields_for(rec.get("kind", "")),
+        chart_cpu=",".join(f"{v:.2f}" for v in chart_cpu),
+        chart_mem=",".join(f"{v:.2f}" for v in chart_mem),
+    )
+
+
+def _sparkline(latest: float, n: int = 12, jitter: float = 0.1) -> list[float]:
+    """Deterministic-ish short series ending at `latest` for dashboard charts."""
+    import math
+    out: list[float] = []
+    for i in range(n):
+        t = (i + 1) / n
+        wobble = 1.0 + jitter * math.sin(i * 1.7) * (1.0 - t)
+        out.append(max(0.0, latest * t * wobble))
+    if out:
+        out[-1] = max(0.0, latest)
+    return out
 
 
 @web_bp.post("/hypervisors/<hv_id>/delete")
@@ -229,3 +255,17 @@ def audit():
     return render_template("audit.html",
                            entries=current_app.store.audit_entries(),
                            role=session.get("role"))
+
+
+@web_bp.get("/settings/pxe")
+@login_required(ROLE_ADMIN)
+def pxe_settings():
+    """Read-only PXE infra knobs from env (Ansible/host .env) — no DB write."""
+    pxe = {
+        "host_ip": os.environ.get("PXE_HOST_IP", ""),
+        "interface": os.environ.get("PXE_INTERFACE", ""),
+        "subnet": os.environ.get("PXE_SUBNET", ""),
+        "bootfile": os.environ.get("PXE_BOOTFILE", ""),
+        "engine_url": current_app.config.get("PXE_ENGINE_URL", ""),
+    }
+    return render_template("pxe_settings.html", pxe=pxe, role=session.get("role"))

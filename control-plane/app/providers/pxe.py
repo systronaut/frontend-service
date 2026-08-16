@@ -19,6 +19,40 @@ from ..catalog import get_image
 from .. import templating
 
 
+def unstage_host(*, mac: str = "", hostname: str = "",
+                 base_url: str | None = None, token: str | None = None,
+                 timeout: float = 10.0) -> None:
+    """Remove dnsmasq reservation + rendered host files (autounattend etc.).
+
+    Prefer MAC when known. Hostname falls back to DELETE /api/v1/hosts?hostname=
+    so HV destroy paths (vSphere-generated MAC) still scrub plaintext answers.
+    Idempotent: 404 from the engine is treated as success.
+    """
+    import os as _os
+    base_url = (base_url or _os.environ.get("PXE_ENGINE_URL", "http://pxe-engine:8081")).rstrip("/")
+    token = token if token is not None else _os.environ.get("PXE_ENGINE_TOKEN", "")
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    try:
+        if mac:
+            resp = requests.delete(f"{base_url}/api/v1/hosts/{mac}",
+                                   headers=headers, timeout=timeout)
+            if resp.status_code not in (200, 204, 404):
+                raise ProviderError(
+                    f"PXE engine host delete failed ({resp.status_code}): {resp.text[:200]}")
+        if hostname:
+            resp = requests.delete(f"{base_url}/api/v1/hosts",
+                                   params={"hostname": hostname},
+                                   headers=headers, timeout=timeout)
+            if resp.status_code not in (200, 204, 404):
+                raise ProviderError(
+                    f"PXE engine hostname cleanup failed ({resp.status_code}): "
+                    f"{resp.text[:200]}")
+    except requests.RequestException as exc:
+        raise ProviderError(f"PXE engine unreachable during unstage: {exc}") from exc
+
+
 def stage_host(spec: DeploymentSpec, compliance: ComplianceResult, *,
                mac: str | None = None, base_url: str | None = None,
                token: str | None = None, host_ip: str | None = None,
@@ -118,11 +152,7 @@ class PxeProvider(Provider):
         return "unknown"
 
     def destroy(self, provider_ref: str) -> ProviderResult:
-        try:
-            resp = requests.delete(self._url(f"/api/v1/hosts/{provider_ref}"),
-                                   headers=self._headers(), timeout=self.timeout)
-        except requests.RequestException as exc:
-            raise ProviderError(f"PXE engine unreachable: {exc}") from exc
-        if resp.status_code not in (200, 204):
-            raise ProviderError(f"Failed to deregister host: {resp.status_code}")
+        # DELETE removes dnsmasq include + host/<slug>/ (autounattend plaintext).
+        unstage_host(mac=provider_ref, base_url=self.base_url,
+                     token=self.token, timeout=self.timeout)
         return ProviderResult(ok=True, provider_ref=provider_ref, message="Host deregistered.")

@@ -1,0 +1,97 @@
+# Systronaut kickstart — backend Jinja2 (Ansible roles/pxe = Vorlage).
+# Profile: {{ security_profile }} ({{ standards | join(', ') or 'baseline' }})
+# Host: {{ hostname }}  OS: {{ os_key }}
+#version=RHEL9
+{% if package_role == 'graphical' and not harden_minimal_install %}
+graphical
+{% else %}
+text
+{% endif %}
+eula --agreed
+keyboard --vckeymap={{ keyboard }} --xlayouts='{{ keyboard }}'
+lang {{ locale }}
+timezone {{ timezone }} --utc
+firstboot --disable
+reboot
+
+network --bootproto={% if net_mode == 'static' and ip %}static --ip={{ ip }} --netmask={{ netmask }}{% if gateway %} --gateway={{ gateway }}{% endif %}{% if dns %} --nameserver={{ dns }}{% endif %}{% else %}dhcp{% endif %} --hostname={{ hostname }} --device=link --activate
+
+{% if harden_disk_encryption and disk_passphrase %}
+# LUKS (ISO 27001 A.8.24 / NIS2 21(2)(h))
+ignoredisk --only-use={{ disk_device }}
+clearpart --drives={{ disk_device }} --all --initlabel
+autopart --type=lvm --encrypted --passphrase={{ disk_passphrase }}
+{% else %}
+ignoredisk --only-use={{ disk_device }}
+clearpart --drives={{ disk_device }} --all --initlabel
+autopart --type=lvm
+{% endif %}
+
+{% if admin_password_hash %}
+rootpw --iscrypted {{ admin_password_hash }}
+user --groups=wheel --name={{ admin_user }} --gecos="{{ admin_user }}" --password={{ admin_password_hash }} --iscrypted
+{% else %}
+# No password from WebUI: lock local logins; expect ssh_pubkey in %post.
+rootpw --lock
+user --groups=wheel --name={{ admin_user }} --gecos="{{ admin_user }}" --password=* --lock
+{% endif %}
+
+{% if rhsm_org and rhsm_activation_key %}
+rhsm --organization={{ rhsm_org }} --activation-key={{ rhsm_activation_key }}
+{% endif %}
+
+%packages
+{% if harden_minimal_install or package_role == 'minimal' %}
+@core
+{% elif package_role == 'graphical' %}
+@^graphical-server-environment
+@graphical-admin-tools
+{% elif package_role == 'dbserver' %}
+@^minimal-environment
+postgresql-server
+{% elif package_role == 'appserver' %}
+@^minimal-environment
+httpd
+{% else %}
+@^minimal-environment
+{% endif %}
+openssh-server
+curl
+{% if harden_audit_logging %}
+audit
+{% endif %}
+{% if harden_host_firewall %}
+firewalld
+{% endif %}
+{% if harden_time_sync %}
+chrony
+{% endif %}
+%end
+
+%post --erroronfail
+#!/bin/sh
+set -eu
+HOSTNAME="{{ hostname }}"
+ADMIN_USER="{{ admin_user }}"
+{% if harden_time_sync and ntp_server %}
+if [ -f /etc/chrony.conf ]; then
+  sed -i '/^pool /d;/^server /d' /etc/chrony.conf || true
+  echo "server {{ ntp_server }} iburst" >> /etc/chrony.conf
+fi
+{% endif %}
+{% if ssh_pubkey %}
+install -d -m 700 -o "$ADMIN_USER" -g "$ADMIN_USER" "/home/$ADMIN_USER/.ssh"
+printf '%s\n' '{{ ssh_pubkey }}' >> "/home/$ADMIN_USER/.ssh/authorized_keys"
+chmod 600 "/home/$ADMIN_USER/.ssh/authorized_keys"
+chown -R "$ADMIN_USER:$ADMIN_USER" "/home/$ADMIN_USER/.ssh"
+{% endif %}
+# NIS2/ISO 27001: apply selected HARDEN_* controls on the target.
+curl -sf "{{ hardening_url }}" -o /tmp/systronaut-hardening.env
+curl -sf "{{ cis_linux_url }}" -o /tmp/systronaut-cis-linux.sh
+set -a
+# shellcheck disable=SC1091
+. /tmp/systronaut-hardening.env
+set +a
+sh /tmp/systronaut-cis-linux.sh
+hostnamectl set-hostname "$HOSTNAME" 2>/dev/null || echo "$HOSTNAME" > /etc/hostname
+%end

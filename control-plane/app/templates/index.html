@@ -1,52 +1,49 @@
 {% extends 'base.html' %}
-{% block title %}Overview{% endblock %}
+{% block title %}Kickstart{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-1">
-  <h4 class="mb-0 d-flex align-items-center" style="gap:.5rem">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-    Overview
-  </h4>
-  <a class="btn btn-pink" href="{{ url_for('web.deploy_form') }}">+ New deployment</a>
+{# Called by web.routes.index via render_template('index.html') — screenshot about-2 kickstart generator. #}
+<div class="kickstart-hero">
+  <h1 class="kickstart-brand">
+    <svg class="kickstart-doc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4M9 12h6M9 16h6"/>
+    </svg>
+    SYSTRONAUT
+  </h1>
+  <p class="kickstart-tagline">kickstart config generator</p>
 </div>
 
-<!-- navy metrics bar (screenshot: Hypervisor / Memory / Storage) -->
-<div class="statbar">
+<div class="os-grid kickstart-grid">
+  {% for img in images %}
+  <div class="os-tile">
+    <div class="os-tile-body">
+      <div class="os-fam">{{ img.family }}</div>
+      <div class="os-name">{{ img.label }}</div>
+      <div class="os-meta">Create {{ img.distro }}/{{ img.version }} Easy Config</div>
+    </div>
+    <a class="btn btn-primary btn-sm mt-2" style="width:100%"
+       href="{{ url_for('web.deploy_form', os=img.key) }}">Build</a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="statbar mt-4">
   <div class="stat">
-    <div class="stat-label"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 20h8"/></svg> Operating systems</div>
+    <div class="stat-label">Operating systems</div>
     <div class="stat-value">{{ images|length }}</div>
   </div>
   <div class="stat">
-    <div class="stat-label"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg> Providers</div>
+    <div class="stat-label">Providers</div>
     <div class="stat-value">{{ providers_count }}</div>
   </div>
   <div class="stat">
-    <div class="stat-label"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3.5 8-7 10-3.5-2-7-5-7-10V6z"/></svg> Security profiles</div>
+    <div class="stat-label">Security profiles</div>
     <div class="stat-value">{{ profiles|length }}</div>
   </div>
 </div>
 
-<div class="row">
-  <div class="col-lg-7 mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <strong>Deploy an operating system</strong>
-      <span class="text-muted-2">hardened · NIS2 / ISO 27001</span>
-    </div>
-    <div class="os-grid">
-      {% for img in images %}
-      <div class="os-tile">
-        <div class="os-tile-body">
-          <div class="os-fam">{{ img.family }}</div>
-          <div class="os-name">{{ img.label }}</div>
-          <div class="os-meta">{{ img.distro }} · {{ img.version }} · {{ img.firmware|upper }}</div>
-        </div>
-        <a class="btn btn-primary btn-sm mt-2" style="width:100%" href="{{ url_for('web.deploy_form', os=img.key) }}">Build</a>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-
-  <div class="col-lg-5 mb-4">
-    <div class="surface p-3 mb-4">
+<div class="row mt-2">
+  <div class="col-lg-6 mb-4">
+    <div class="surface p-3">
       <div class="card-header px-2 pb-2 mb-3">Security profiles</div>
       {% for p in profiles %}
       <div class="d-flex justify-content-between align-items-start mb-2">
@@ -61,6 +58,8 @@
       {% endfor %}
       <a href="{{ url_for('web.compliance') }}" class="small">View the full control mapping &rarr;</a>
     </div>
+  </div>
+  <div class="col-lg-6 mb-4">
     <div class="surface p-3">
       <div class="card-header px-2 pb-2 mb-3">Recent deployments</div>
       {% if recent %}

@@ -1,11 +1,12 @@
 #!ipxe
-
+# Ansible Vorlage — per-host autoinstall seed when have_answer.
 set base-url http://{{ host_ip }}/ubuntu2404
-
+{% if have_answer %}
+kernel ${base-url}/linux iso-url=https://releases.ubuntu.com/24.04.4/ubuntu-24.04.4-live-server-amd64.iso ip=dhcp \
+autoinstall ds=nocloud-net;s={{ answer_url }}/ ---
+{% else %}
 kernel ${base-url}/linux iso-url=https://releases.ubuntu.com/24.04.4/ubuntu-24.04.4-live-server-amd64.iso ip=dhcp \
 autoinstall ds=nocloud-net;s=http://{{ host_ip }}/ubuntu2404/ ---
-
+{% endif %}
 initrd ${base-url}/initrd
-
 boot
-

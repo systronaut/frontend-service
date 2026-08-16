@@ -98,6 +98,20 @@ def build_provider(record: dict):
     raise ValueError(f"Unknown hypervisor kind {kind!r}")
 
 
+# Network-related config keys shown on the Hypervisor → Network tab (read-only).
+_NET_FIELDS: dict[str, list[tuple[str, str]]] = {
+    "esxi":    [("network", "VM network / port group"), ("datastore", "Datastore")],
+    "vsphere": [("network", "Port group"), ("datacenter", "Datacenter"), ("cluster", "Cluster")],
+    "proxmox": [("bridge", "Bridge"), ("node", "Node"), ("storage", "Storage")],
+    "libvirt": [("bridge", "Bridge"), ("network", "libvirt network"), ("pool", "Storage pool")],
+    "hyperv":  [("switch", "Virtual switch"), ("vhd_path", "VHD path")],
+}
+
+
+def network_fields_for(kind: str) -> list[tuple[str, str]]:
+    return list(_NET_FIELDS.get(kind, []))
+
+
 def inventory_for(record: dict) -> HypervisorInventory:
     """Read-only inventory for one registered hypervisor (never raises)."""
     try:
@@ -106,7 +120,7 @@ def inventory_for(record: dict) -> HypervisorInventory:
         if inv is None:
             return HypervisorInventory(provider=record["kind"], endpoint=record["host"],
                                        connected=False, message="inventory not supported")
-        return inv
+        return inv.with_usage_estimate()
     except Exception as exc:  # keep the page resilient to a single bad host
         return HypervisorInventory(provider=record["kind"], endpoint=record.get("host", ""),
                                    connected=False, message=str(exc))

@@ -9,11 +9,29 @@
 # the platform records exactly which controls were enforced for which OS, so the
 # resulting deployment carries machine-readable compliance evidence. Controls a
 # given OS cannot enforce are reported as gaps rather than silently dropped.
+#
+# Honesty rule: a control is only "applied" when the install path can actually
+# enforce it. Missing prerequisites (e.g. no PXE_DISK_ENCRYPTION_PASSPHRASE for
+# Linux LUKS) become gaps — never silent success.
+#
+# Disk encryption wiring (as of this slice):
+#   - Kickstart / Debian preseed / SLES 15 AutoYaST / Ubuntu autoinstall (LVM
+#     layout password) / SLES 16 Agama (generate.encryption.luks2): applied when
+#     passphrase is set and the image supports_disk_encryption.
+#   - Without passphrase: honest gap ("no disk passphrase…").
 
+import logging
+import os
 from dataclasses import dataclass, field
 from typing import Optional
 
 from .catalog import OsImage
+
+log = logging.getLogger(__name__)
+
+# Linux FDE (LUKS) needs a passphrase at kickstart/autoinstall time. BitLocker
+# on Windows can use TPM without this env var.
+_LUKS_PASSPHRASE_ENV = "PXE_DISK_ENCRYPTION_PASSPHRASE"
 
 
 @dataclass(frozen=True)
@@ -189,11 +207,18 @@ def is_valid_profile(name: str) -> bool:
 
 @dataclass
 class ComplianceResult:
-    """Outcome of applying a profile to a specific OS image."""
+    """Outcome of applying a profile to a specific OS image.
+
+    Honesty: ``applied`` means *intended / enforceable at install staging*
+    (answer-file / post-harden directives were rendered). It is **not** a
+    post-deploy attestation — e.g. BitLocker may still fail without TPM, and
+    a failed ``_hash_password`` leaves accounts locked without updating gaps.
+    """
 
     profile: str
     standards: tuple[str, ...]
-    applied: list[Control] = field(default_factory=list)   # enforceable on this OS
+    # Intended controls staged for this OS (install-time intent, not attestation).
+    applied: list[Control] = field(default_factory=list)
     gaps: list[tuple[Control, str]] = field(default_factory=list)  # (control, reason)
 
     @property
@@ -201,11 +226,16 @@ class ComplianceResult:
         return not self.gaps
 
     def to_evidence(self) -> dict:
-        """Machine-readable compliance evidence stored with the deployment."""
+        """Machine-readable compliance evidence stored with the deployment.
+
+        ``applied_controls`` keeps the historical key name; ``controls_status``
+        clarifies these are install-time intent, not runtime attestation.
+        """
         return {
             "profile": self.profile,
             "standards": list(self.standards),
             "fully_compliant": self.is_fully_compliant,
+            "controls_status": "intended",  # not post-deploy attestation
             "applied_controls": [
                 {
                     "id": c.id,
@@ -213,6 +243,7 @@ class ComplianceResult:
                     "iso27001": list(c.iso27001),
                     "nis2": list(c.nis2),
                     "mechanism": c.mechanism,
+                    "status": "intended",
                 }
                 for c in self.applied
             ],
@@ -223,7 +254,17 @@ class ComplianceResult:
         }
 
 
-def evaluate(profile_name: str, image: OsImage) -> ComplianceResult:
+def disk_encryption_passphrase(override: str = "") -> str:
+    """Passphrase for Linux LUKS answer-file rendering.
+
+    Prefer an explicit override (WebUI InstallSettings); else env
+    ``PXE_DISK_ENCRYPTION_PASSPHRASE``. Empty means LUKS cannot be applied.
+    """
+    return (override or "").strip() or os.environ.get(_LUKS_PASSPHRASE_ENV, "").strip()
+
+
+def evaluate(profile_name: str, image: OsImage, *,
+             disk_passphrase: str = "", package_role: str = "minimal") -> ComplianceResult:
     """Resolve which controls a profile can enforce on a given OS image.
 
     A control becomes a *gap* (not silently dropped) when the OS family is out of
@@ -233,6 +274,8 @@ def evaluate(profile_name: str, image: OsImage) -> ComplianceResult:
     if profile is None:
         raise ValueError(f"unknown security profile: {profile_name!r}")
 
+    passphrase = disk_encryption_passphrase(disk_passphrase)
+    role = (package_role or "minimal").strip().lower()
     result = ComplianceResult(profile=profile.name, standards=profile.standards)
     for control in profile.controls():
         if image.family not in control.applies_to:
@@ -244,5 +287,27 @@ def evaluate(profile_name: str, image: OsImage) -> ComplianceResult:
         if control.requires_secure_boot_support and not image.supports_secure_boot:
             result.gaps.append((control, "image does not support Secure Boot"))
             continue
+        # Linux LUKS cannot be applied without an install-time passphrase.
+        if (control.mechanism == "disk_encryption" and image.family == "linux"
+                and not passphrase):
+            result.gaps.append((
+                control,
+                "no disk passphrase (WebUI or PXE_DISK_ENCRYPTION_PASSPHRASE); "
+                "LUKS cannot be applied at install time",
+            ))
+            continue
+        # Honest: expanded package roles contradict minimal-install control.
+        if control.mechanism == "minimal_install" and role != "minimal":
+            result.gaps.append((
+                control,
+                f"package_role={role} expands the install set; "
+                "minimal-install not applied (use package_role=minimal)",
+            ))
+            continue
+        if control.mechanism == "disk_encryption" and image.family == "windows":
+            log.warning(
+                "disk_encryption marked intended for Windows; BitLocker is "
+                "best-effort at first logon (TPM required) — not attested"
+            )
         result.applied.append(control)
     return result

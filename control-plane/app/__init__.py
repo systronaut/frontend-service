@@ -36,6 +36,10 @@ def create_app(config_object: type = Config) -> Flask:
     for warning in config_object.warnings():
         app.logger.warning("config: %s", warning)
 
+    # Fail closed if secure PXE answer Jinja2 templates are missing (SLES16 etc.).
+    from . import templating as _templating
+    _templating.assert_answer_templates_present()
+
     # Persistence + services on the app object (single instance per process).
     app.store = Store(app.config["DB_PATH"])
     app.deploy_service = DeployService(app.store)

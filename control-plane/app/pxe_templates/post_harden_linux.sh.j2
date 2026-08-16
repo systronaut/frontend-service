@@ -1,0 +1,14 @@
+#!/bin/sh
+# Systronaut post-harden helper — rendered per-host by the control plane.
+# Answer-file %post / late-commands should curl this or inline the same steps.
+# Does NOT claim compliance success if curls fail (set -e).
+set -eu
+BASE="http://{{ host_ip }}"
+SLUG="{{ slug }}"
+curl -sf "${BASE}/host/${SLUG}/hardening.env" -o /tmp/systronaut-hardening.env
+curl -sf "${BASE}/hardening/cis-linux.sh" -o /tmp/systronaut-cis-linux.sh
+# shellcheck disable=SC1091
+set -a
+. /tmp/systronaut-hardening.env
+set +a
+sh /tmp/systronaut-cis-linux.sh

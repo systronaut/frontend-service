@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<!DOCTYPE profile>
+<!-- Systronaut AutoYaST — backend Jinja2 (Ansible sles/sles15sp7.xml = Vorlage).
+     Profile: {{ security_profile }} · Host: {{ hostname }} · role: {{ package_role }} -->
+<profile xmlns="http://www.suse.com/1.0/yast2ns" xmlns:config="http://www.suse.com/1.0/configns">
+  <bootloader>
+    <loader_type>grub2-efi</loader_type>
+  </bootloader>
+  <general>
+    <ask-list config:type="list"/>
+    <mode>
+      <confirm config:type="boolean">false</confirm>
+      <second_stage config:type="boolean">false</second_stage>
+    </mode>
+  </general>
+
+  <keyboard>
+    <keymap>{{ 'german' if keyboard == 'de' else 'english-us' }}</keymap>
+  </keyboard>
+  <language>
+    <language>{{ locale_lang }}</language>
+    <languages/>
+  </language>
+  <timezone>
+    <hwclock>UTC</hwclock>
+    <timezone>{{ timezone }}</timezone>
+  </timezone>
+
+  <networking>
+    <keep_install_network config:type="boolean">true</keep_install_network>
+    <dns>
+      <hostname>{{ hostname }}</hostname>
+{% if domain %}
+      <domain>{{ domain }}</domain>
+{% endif %}
+    </dns>
+  </networking>
+
+  <partitioning config:type="list">
+    <drive>
+      <device>/dev/{{ disk_device }}</device>
+      <use>all</use>
+{% if harden_disk_encryption and disk_passphrase %}
+      <partitions config:type="list">
+        <partition>
+          <create config:type="boolean">true</create>
+          <crypt_fs config:type="boolean">true</crypt_fs>
+          <crypt_key>{{ disk_passphrase }}</crypt_key>
+          <filesystem config:type="symbol">btrfs</filesystem>
+          <format config:type="boolean">true</format>
+          <mount>/</mount>
+          <size>max</size>
+        </partition>
+      </partitions>
+{% endif %}
+    </drive>
+  </partitioning>
+
+  <software t="map">
+    <install_recommended t="boolean">{{ 'false' if harden_minimal_install else 'true' }}</install_recommended>
+    <packages t="list">
+      <package>openssh</package>
+      <package>curl</package>
+{% if harden_host_firewall %}
+      <package>firewalld</package>
+{% endif %}
+{% if harden_audit_logging %}
+      <package>audit</package>
+{% endif %}
+{% if package_role == 'dbserver' and not harden_minimal_install %}
+      <package>postgresql-server</package>
+{% endif %}
+{% if package_role == 'appserver' and not harden_minimal_install %}
+      <package>nginx</package>
+{% endif %}
+    </packages>
+    <patterns t="list">
+{% if harden_minimal_install or package_role == 'minimal' %}
+      <pattern>minimal_base</pattern>
+{% elif package_role == 'graphical' %}
+      <pattern>enhanced_base</pattern>
+      <pattern>gnome_basic</pattern>
+{% else %}
+      <pattern>base</pattern>
+      <pattern>enhanced_base</pattern>
+{% endif %}
+    </patterns>
+    <products t="list">
+      <product>SLES</product>
+    </products>
+  </software>
+
+  <services-manager t="map">
+    <default_target>{{ 'graphical' if package_role == 'graphical' and not harden_minimal_install else 'multi-user' }}</default_target>
+    <services t="map">
+      <enable t="list">
+        <service>sshd</service>
+{% if harden_host_firewall %}
+        <service>firewalld</service>
+{% endif %}
+{% if harden_audit_logging %}
+        <service>auditd</service>
+{% endif %}
+      </enable>
+    </services>
+  </services-manager>
+
+  <users config:type="list">
+{% if admin_password_hash %}
+    <user>
+      <encrypted config:type="boolean">true</encrypted>
+      <fullname>{{ admin_user }}</fullname>
+      <gid>100</gid>
+      <home>/home/{{ admin_user }}</home>
+      <shell>/bin/bash</shell>
+      <user_password>{{ admin_password_hash }}</user_password>
+      <username>{{ admin_user }}</username>
+{% if ssh_pubkey %}
+      <authorized_keys config:type="list">
+        <listentry>{{ ssh_pubkey }}</listentry>
+      </authorized_keys>
+{% endif %}
+    </user>
+{% endif %}
+  </users>
+
+  <scripts>
+    <chroot-scripts config:type="list">
+      <script>
+        <filename>systronaut-harden.sh</filename>
+        <chrooted config:type="boolean">true</chrooted>
+        <interpreter>shell</interpreter>
+        <source><![CDATA[
+#!/bin/sh
+set -eu
+curl -sf "{{ hardening_url }}" -o /tmp/systronaut-hardening.env
+curl -sf "{{ cis_linux_url }}" -o /tmp/systronaut-cis-linux.sh
+set -a
+# shellcheck disable=SC1091
+. /tmp/systronaut-hardening.env
+set +a
+sh /tmp/systronaut-cis-linux.sh
+hostnamectl set-hostname "{{ hostname }}" 2>/dev/null || echo "{{ hostname }}" > /etc/hostname
+]]></source>
+      </script>
+    </chroot-scripts>
+  </scripts>
+</profile>

@@ -34,7 +34,10 @@ if ($env:HARDEN_CIS_BASELINE -eq "1") {
 if ($env:HARDEN_DISK_ENCRYPTION -eq "1") {
   Log "enabling BitLocker on C:"
   try { Enable-BitLocker -MountPoint "C:" -EncryptionMethod XtsAes256 -UsedSpaceOnly -TpmProtector -ErrorAction Stop }
-  catch { Log "BitLocker not enabled (no TPM?): $_" }
+  catch {
+    Log "BitLocker not enabled (no TPM?): $_"
+    Write-Warning "Systronaut: BitLocker FAILED — compliance evidence may still list disk_encryption as intended/applied at staging"
+  }
 }
 
 # --- Remote access: RDP NLA (CIS 18.x) --------------------------------------

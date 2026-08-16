@@ -68,13 +68,15 @@ Every network-boot provider (`pxe`, `vsphere`, `libvirt`, `proxmox`) requires:
 | Contract | allocates a VMID (idempotent on hostname), creates the VM with the derived MAC on `net0`, stages the install, starts it. `provider_ref` = `node/vmid`. |
 | RBAC | the token/user needs `VM.Allocate`, `VM.Config.*`, `VM.PowerMgmt`, `Datastore.AllocateSpace` on the node/pool. |
 
-## ESXi — stub
+## ESXi — real
 
 | | |
 |---|---|
 | Dependencies | `pyvmomi` |
 | Credentials | `ESXI_HOST`, `ESXI_USER`, `ESXI_PASSWORD` |
-| Status | real contract + credential surface; `create()` raises `NotImplementedError` (no fake success). Implement via pyVmomi against the standalone host, then attach the guest to the PXE network to reuse `stage_host`. |
+| Placement | `ESXI_DATASTORE`, `ESXI_NETWORK` (PXE port group); optional `ESXI_DATACENTER` (default `ha-datacenter`) |
+| TLS | `ESXI_INSECURE=1` by default (self-signed host cert); set `0` once the CA is trusted |
+| Contract | subclasses the vSphere adapter: UEFI/Secure-Boot VM on the PXE network, then `stage_host`. |
 
 ## OpenStack — stub (different install path)
 

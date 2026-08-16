@@ -3,9 +3,8 @@
 # install, applying the security profile's controls through whatever mechanism
 # the target supports (PXE answer files, vSphere guest customization, ...).
 #
-# Only the PXE provider is fully implemented. The cloud/hypervisor adapters are
-# scaffolded with the right shape + credential surface and raise NotImplemented
-# at the create step, so the contract is real even though the call is a stub.
+# PXE, libvirt, Proxmox, vSphere, ESXi and Hyper-V are implemented. OpenStack
+# remains a stub (Nova needs a hardened image + cloud-init path, not PXE).
 
 import hashlib
 import os
@@ -67,10 +66,29 @@ class HypervisorInventory:
     storage_gb: int = 0        # host storage
     vms: tuple[VmInfo, ...] = ()
     message: str = ""          # error/context when not connected
+    # Optional live gauges for the Dashboard charts (best-effort; 0 if unknown).
+    cpu_used_pct: float = 0.0
+    memory_used_mb: int = 0
 
     @property
     def running(self) -> int:
         return sum(1 for v in self.vms if v.state == "running")
+
+    def with_usage_estimate(self) -> "HypervisorInventory":
+        """Fill cpu_used_pct / memory_used_mb from running VMs when providers omit gauges."""
+        if not self.connected or (self.cpu_used_pct or self.memory_used_mb):
+            return self
+        used_mem = sum(v.memory_mb for v in self.vms if v.state == "running")
+        used_vcpu = sum(v.vcpu for v in self.vms if v.state == "running")
+        cpu_pct = 0.0
+        if self.cpu_total > 0 and used_vcpu:
+            cpu_pct = min(100.0, 100.0 * used_vcpu / self.cpu_total)
+        return HypervisorInventory(
+            provider=self.provider, endpoint=self.endpoint, connected=self.connected,
+            cpu_total=self.cpu_total, memory_mb=self.memory_mb, storage_gb=self.storage_gb,
+            vms=self.vms, message=self.message,
+            cpu_used_pct=cpu_pct, memory_used_mb=used_mem,
+        )
 
 
 class Provider(ABC):

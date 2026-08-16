@@ -1,0 +1,15 @@
+# Systronaut post-harden helper (Windows) — rendered per-host by the control plane.
+# FirstLogonCommands / runonce should download and run this once.
+$ErrorActionPreference = "Stop"
+$base = "http://{{ host_ip }}"
+$slug = "{{ slug }}"
+$envFile = "$env:TEMP\systronaut-hardening.env"
+$cisFile = "$env:TEMP\systronaut-cis-windows.ps1"
+Invoke-WebRequest -Uri "$base/host/$slug/hardening.env" -OutFile $envFile -UseBasicParsing
+Invoke-WebRequest -Uri "$base/hardening/cis-windows.ps1" -OutFile $cisFile -UseBasicParsing
+Get-Content $envFile | ForEach-Object {
+  if ($_ -match '^\s*#' -or $_ -match '^\s*$') { return }
+  $k, $v = $_ -split '=', 2
+  Set-Item -Path "Env:$k" -Value $v
+}
+& powershell -ExecutionPolicy Bypass -File $cisFile

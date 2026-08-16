@@ -65,15 +65,17 @@ CATALOG: tuple[OsImage, ...] = (
     ),
     OsImage(
         key="debian13", family="linux", distro="debian", label="Debian 13.4",
-        version="13.4", ipxe_chain="debian13/debian13.ipxe",
+        version="13.4", ipxe_chain="debian-installer/debian13.ipxe",
         answer_template="debian-installer/appserver.cfg",
-        notes="preseed; appserver / dbserver recipes available.",
+        notes="preseed; package_role appserver/dbserver/graphical/minimal.",
     ),
     OsImage(
         key="ubuntu2404", family="linux", distro="ubuntu", label="Ubuntu 24.04 LTS",
         version="24.04", ipxe_chain="ubuntu2404/ubuntu2404.ipxe",
         answer_template="ubuntu2404/user-data",
-        notes="cloud-init autoinstall; target needs >= 8 GB RAM (live ISO).",
+        supports_disk_encryption=True,  # Subiquity LVM layout password → LUKS
+        notes="cloud-init autoinstall; LUKS when passphrase set; late-commands apply CIS. "
+              "Needs >= 8 GB RAM (live ISO).",
     ),
     OsImage(
         key="oracle101", family="linux", distro="oracle", label="Oracle Linux 10.1 (UEK)",
@@ -82,15 +84,16 @@ CATALOG: tuple[OsImage, ...] = (
     ),
     OsImage(
         key="sles157", family="linux", distro="sles", label="SUSE Linux Enterprise 15 SP7",
-        version="15.7", ipxe_chain="sles157/sles157.ipxe",
+        version="15.7", ipxe_chain="sles/sles157.ipxe",
         answer_template="sles/sles15sp7.xml",
-        notes="AutoYaST.",
+        notes="AutoYaST; LUKS when passphrase set. CIS via chroot-scripts.",
     ),
     OsImage(
         key="sles160", family="linux", distro="sles", label="SUSE Linux Enterprise 16.0",
-        version="16.0", ipxe_chain="sles160/sles160.ipxe",
+        version="16.0", ipxe_chain="sles/sles160.ipxe",
         answer_template="sles/sles160.json",
-        notes="Agama / JSON autoinstall.",
+        supports_disk_encryption=True,  # Agama generate.encryption.luks2
+        notes="Agama JSON; LUKS2 when passphrase set; post scripts apply CIS.",
     ),
 )
 

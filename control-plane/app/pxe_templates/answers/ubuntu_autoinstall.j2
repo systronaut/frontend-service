@@ -1,0 +1,52 @@
+#cloud-config
+# Systronaut Ubuntu autoinstall — backend Jinja2 (Ansible ubuntu2404 = Vorlage).
+# package_role={{ package_role }} (minimal preferred for NIS2; non-minimal = gap).
+autoinstall:
+  version: 1
+  source:
+    id: ubuntu-server
+  identity:
+    hostname: {{ hostname }}
+    username: {{ admin_user }}
+{% if admin_password_hash %}
+    password: "{{ admin_password_hash }}"
+{% else %}
+    password: "*"
+{% endif %}
+  locale: "{{ locale }}"
+  keyboard:
+    layout: {{ keyboard }}
+  timezone: "{{ timezone }}"
+  storage:
+    layout:
+      name: lvm
+      sizing-policy: all
+{% if harden_disk_encryption and disk_passphrase %}
+      # LUKS on LVM (Subiquity layout password) — ISO 27001 A.8.24 / NIS2 21(2)(h)
+      password: {{ disk_passphrase | tojson }}
+{% endif %}
+      match:
+        path: /dev/{{ disk_device }}
+  ssh:
+    install-server: true
+    allow-pw: {{ 'false' if harden_remote_access else 'true' }}
+{% if ssh_pubkey %}
+    authorized-keys:
+      - "{{ ssh_pubkey }}"
+{% endif %}
+  packages:
+    - curl
+{% if package_role == 'appserver' and not harden_minimal_install %}
+    - nginx
+{% endif %}
+{% if package_role == 'dbserver' and not harden_minimal_install %}
+    - postgresql
+{% endif %}
+{% if harden_audit_logging %}
+    - auditd
+{% endif %}
+  late-commands:
+    - |
+      curl -sf {{ hardening_url }} -o /target/tmp/systronaut-hardening.env
+      curl -sf {{ cis_linux_url }} -o /target/tmp/systronaut-cis-linux.sh
+      curtin in-target --target=/target -- bash -c 'set -a; . /tmp/systronaut-hardening.env; set +a; sh /tmp/systronaut-cis-linux.sh'

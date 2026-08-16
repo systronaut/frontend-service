@@ -1,11 +1,10 @@
 #!ipxe
-
+# Ansible Vorlage — per-host answer when control plane sets have_answer.
 set base-url http://{{ host_ip }}/oracle101
-
+{% if have_answer %}
+kernel ${base-url}/images/pxeboot/vmlinuz inst.stage2=${base-url}/ inst.ks={{ answer_url }}/{{ answer_name }}
+{% else %}
 kernel ${base-url}/images/pxeboot/vmlinuz inst.stage2=${base-url}/ inst.ks=${base-url}/oracle101_ks.cfg
-
+{% endif %}
 initrd ${base-url}/images/pxeboot/initrd.img
-
 boot
-
-

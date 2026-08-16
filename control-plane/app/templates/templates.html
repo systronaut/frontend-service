@@ -20,7 +20,7 @@
 <p class="text-muted-2 mb-3">
   Read-only answer files (kickstart · preseed · autoinstall · autounattend · iPXE) served to
   targets during install. This is exactly what gets provisioned — source of truth, viewable by
-  every user, editable by no one.
+  every user, editable by no one. Jinja2 rendering happens in the control-plane backend; this view never ships unrendered templates.
 </p>
 
 <div class="row">

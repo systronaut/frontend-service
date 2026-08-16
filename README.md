@@ -39,11 +39,22 @@ as hardened as a bare-metal host.
 | **vSphere** | real | pyVmomi → UEFI/Secure-Boot VM on the PXE port group |
 | **libvirt / KVM** | real | libvirt-python → OVMF/Secure-Boot domain on the PXE bridge |
 | **Proxmox VE** | real | proxmoxer REST → OVMF/Secure-Boot VM on the PXE bridge |
-| **ESXi** | stub | standalone host (pyVmomi) — real contract, `create()` stubbed |
+| **ESXi** | real | pyVmomi → standalone host, UEFI/Secure-Boot VM on PXE network |
+| **Hyper-V** | real | WinRM/pypsrp → Gen-2 Secure-Boot VM on PXE vSwitch |
 | **OpenStack** | stub | Nova can't PXE-boot; needs a hardened image + cloud-init (different path) |
 
 Requirements, credentials and the hardened-boot contract for each provider are in
 [`REQUIREMENTS.md`](REQUIREMENTS.md). Adapters live in `control-plane/app/providers/`.
+
+
+## Jinja2 ownership (backend)
+
+All `*.j2` PXE / iPXE templates are **owned and rendered by the control-plane
+backend** (`control-plane/app/templating.py`, `app/pxe_templates/`, plus the
+read-only `ansible/roles/pxe/files` lookup tree mounted as `PXE_LOOKUP_DIR`).
+The WebUI never edits templates — operators deploy via the console (OS cards →
+Deploy → providers/hypervisors); `stage_host()` uploads already-rendered
+artifacts to the pxe-engine. Templates in the UI are a read-only library view.
 
 ## Compliance (must-have)
 

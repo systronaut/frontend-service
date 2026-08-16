@@ -1,0 +1,85 @@
+# Systronaut Debian preseed — backend Jinja2 (Ansible debian-installer = Vorlage).
+# Profile: {{ security_profile }} ({{ standards | join(', ') or 'baseline' }})
+# Host: {{ hostname }}  role: {{ package_role }}
+d-i debian-installer/locale string {{ locale }}
+d-i keyboard-configuration/xkb-keymap select {{ keyboard }}
+d-i netcfg/choose_interface select auto
+d-i netcfg/get_hostname string {{ hostname }}
+d-i netcfg/get_domain string {{ domain or 'lan' }}
+{% if net_mode == 'static' and ip %}
+d-i netcfg/disable_autoconfig boolean true
+d-i netcfg/get_ipaddress string {{ ip }}
+d-i netcfg/get_netmask string {{ netmask }}
+{% if gateway %}d-i netcfg/get_gateway string {{ gateway }}{% endif %}
+{% if dns %}d-i netcfg/get_nameservers string {{ dns }}{% endif %}
+d-i netcfg/confirm_static boolean true
+{% endif %}
+
+d-i passwd/root-login boolean false
+d-i passwd/make-user boolean true
+d-i passwd/user-fullname string {{ admin_user }}
+d-i passwd/username string {{ admin_user }}
+{% if admin_password_hash %}
+d-i passwd/user-password-crypted password {{ admin_password_hash }}
+{% else %}
+# SSH-key-only: lock password login until late_command installs the key.
+d-i passwd/user-password-crypted password !
+{% endif %}
+d-i user-setup/allow-password-weak boolean false
+d-i user-setup/encrypt-home boolean false
+
+d-i clock-setup/utc boolean true
+d-i time/zone string {{ timezone }}
+d-i clock-setup/ntp boolean true
+{% if ntp_server %}
+d-i clock-setup/ntp-server string {{ ntp_server }}
+{% endif %}
+
+d-i partman-auto/method string {% if harden_disk_encryption and disk_passphrase %}crypto{% else %}lvm{% endif %}
+d-i partman-lvm/confirm boolean true
+d-i partman-lvm/confirm_nooverwrite boolean true
+d-i partman-auto/disk string /dev/{{ disk_device }}
+d-i partman-auto/choose_recipe select atomic
+{% if harden_disk_encryption and disk_passphrase %}
+d-i partman-crypto/passphrase string {{ disk_passphrase }}
+d-i partman-crypto/passphrase-again string {{ disk_passphrase }}
+{% endif %}
+d-i partman/confirm_write_new_label boolean true
+d-i partman/choose_partition select finish
+d-i partman/confirm boolean true
+d-i partman/confirm_nooverwrite boolean true
+
+{% if package_role == 'graphical' and not harden_minimal_install %}
+tasksel tasksel/first multiselect standard, desktop, ssh-server
+{% elif package_role == 'dbserver' and not harden_minimal_install %}
+tasksel tasksel/first multiselect ssh-server, standard
+{% elif package_role == 'appserver' and not harden_minimal_install %}
+tasksel tasksel/first multiselect ssh-server, standard
+{% else %}
+tasksel tasksel/first multiselect ssh-server
+{% endif %}
+{% if harden_minimal_install %}
+d-i pkgsel/include string openssh-server curl sudo
+{% elif package_role == 'dbserver' %}
+d-i pkgsel/include string openssh-server curl sudo{% if harden_audit_logging %} auditd{% endif %} postgresql
+{% elif package_role == 'appserver' %}
+d-i pkgsel/include string openssh-server curl sudo{% if harden_audit_logging %} auditd{% endif %} nginx
+{% elif package_role == 'graphical' %}
+d-i pkgsel/include string openssh-server curl sudo{% if harden_audit_logging %} auditd{% endif %}
+{% else %}
+d-i pkgsel/include string openssh-server curl sudo{% if harden_audit_logging %} auditd{% endif %}
+{% endif %}
+d-i pkgsel/upgrade select safe-upgrade
+d-i base-installer/install-recommends boolean {{ 'false' if harden_minimal_install else 'true' }}
+d-i grub-installer/only_debian boolean true
+d-i grub-installer/bootdev string default
+d-i finish-install/reboot_in_progress note
+
+# NIS2/ISO 27001: fetch hardening.env + CIS on the installed system.
+d-i preseed/late_command string \
+  in-target curl -sf {{ hardening_url }} -o /tmp/systronaut-hardening.env ; \
+  in-target curl -sf {{ cis_linux_url }} -o /tmp/systronaut-cis-linux.sh ; \
+{% if ssh_pubkey %}
+  in-target sh -c 'install -d -m 700 -o {{ admin_user }} -g {{ admin_user }} /home/{{ admin_user }}/.ssh; printf "%s\n" "{{ ssh_pubkey }}" >> /home/{{ admin_user }}/.ssh/authorized_keys; chmod 600 /home/{{ admin_user }}/.ssh/authorized_keys; chown -R {{ admin_user }}:{{ admin_user }} /home/{{ admin_user }}/.ssh' ; \
+{% endif %}
+  in-target sh -c "set -a; . /tmp/systronaut-hardening.env; set +a; sh /tmp/systronaut-cis-linux.sh"

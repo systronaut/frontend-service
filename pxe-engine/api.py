@@ -15,16 +15,20 @@
 import hmac
 import ipaddress
 import json
+import logging
 import os
 import re
+import shutil
 import signal
 import subprocess
 import tempfile
+import time
 from pathlib import Path
 
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
+log = logging.getLogger("pxe-engine")
 
 # --- config (env) ------------------------------------------------------------
 TOKEN = os.environ.get("PXE_ENGINE_TOKEN", "")
@@ -32,6 +36,12 @@ HOSTS_DIR = Path(os.environ.get("PXE_HOSTS_DIR", "/etc/dnsmasq.d/hosts"))
 HTTP_ROOT = Path(os.environ.get("PXE_HTTP_ROOT", "/var/www/html"))
 REGISTRY = Path(os.environ.get("PXE_REGISTRY", "/data/hosts.json"))
 HOST_IP = os.environ.get("PXE_HOST_IP", "")
+# Optional safety net for abandoned installs (Windows autounattend plaintext).
+# Prefer deployment destroy → DELETE /hosts/{mac}. 0 = disabled.
+try:
+    HOST_FILE_TTL_SECONDS = int(os.environ.get("PXE_HOST_FILE_TTL_SECONDS", "0") or "0")
+except ValueError:
+    HOST_FILE_TTL_SECONDS = 0
 
 _MAC_RE = re.compile(r"^([0-9a-f]{2}:){5}[0-9a-f]{2}$")
 _HOST_RE = re.compile(r"^[a-z0-9]([a-z0-9-]{0,62})$")
@@ -126,6 +136,49 @@ def _validate(payload: dict) -> dict:
             "domain": (payload.get("domain") or ""), "files": files}
 
 
+def _host_dir(slug: str) -> Path:
+    return HTTP_ROOT / "host" / slug
+
+
+def _purge_host_dir(slug: str) -> None:
+    """Remove rendered per-host files (incl. Windows autounattend plaintext)."""
+    path = _host_dir(slug)
+    if path.is_dir():
+        shutil.rmtree(path, ignore_errors=True)
+        log.info("purged host files under %s", path)
+
+
+def _delete_host_artifacts(mac: str) -> None:
+    """Drop dnsmasq include + HTTP host/<slug>/ for one MAC."""
+    slug = mac.replace(":", "-")
+    (HOSTS_DIR / f"{slug}.conf").unlink(missing_ok=True)
+    _purge_host_dir(slug)
+
+
+def _purge_stale_host_dirs() -> int:
+    """TTL safety net for abandoned installs. Returns number of dirs removed."""
+    if HOST_FILE_TTL_SECONDS <= 0:
+        return 0
+    root = HTTP_ROOT / "host"
+    if not root.is_dir():
+        return 0
+    cutoff = time.time() - HOST_FILE_TTL_SECONDS
+    removed = 0
+    for child in root.iterdir():
+        if not child.is_dir():
+            continue
+        try:
+            mtime = child.stat().st_mtime
+        except OSError:
+            continue
+        if mtime < cutoff:
+            shutil.rmtree(child, ignore_errors=True)
+            removed += 1
+            log.warning("TTL purged stale host dir %s (age > %ss)",
+                        child.name, HOST_FILE_TTL_SECONDS)
+    return removed
+
+
 def _render_host_files(v: dict) -> None:
     mac = v["mac"]
     slug = mac.replace(":", "-")
@@ -142,7 +195,7 @@ def _render_host_files(v: dict) -> None:
 
     # 2) per-host files. The control plane renders these with Jinja2 and sends
     #    them here; the engine only persists/serves them (validated upstream).
-    host_dir = HTTP_ROOT / "host" / slug
+    host_dir = _host_dir(slug)
     if v["files"]:
         for name, content in v["files"].items():
             _atomic_write(host_dir / name, content)
@@ -173,6 +226,7 @@ def add_host():
         v = _validate(request.get_json(force=True, silent=True) or {})
     except (ValueError, ipaddress.AddressValueError) as exc:
         return _err(f"validation: {exc}")
+    _purge_stale_host_dirs()
     _render_host_files(v)
     reg = _load_registry()
     reg[v["mac"]] = {"hostname": v["hostname"], "os": v.get("ipxe_chain", ""),
@@ -193,6 +247,31 @@ def get_host(mac):
     return jsonify(reg[mac])
 
 
+@app.delete("/api/v1/hosts")
+def delete_hosts_by_hostname():
+    """DELETE /api/v1/hosts?hostname=foo — scrub by hostname when MAC unknown.
+
+    Used by HV destroy paths (e.g. vSphere-generated MAC) so Windows
+    autounattend.xml and other rendered answers do not linger on the engine.
+    """
+    if not _authorized():
+        return _err("unauthorized", 401)
+    hostname = (request.args.get("hostname") or "").lower()
+    if not hostname or not _HOST_RE.match(hostname):
+        return _err("hostname query required")
+    reg = _load_registry()
+    removed = []
+    for mac, info in list(reg.items()):
+        if (info.get("hostname") or "").lower() == hostname:
+            _delete_host_artifacts(mac)
+            reg.pop(mac, None)
+            removed.append(mac)
+    if removed:
+        _save_registry(reg)
+        _reload_dnsmasq()
+    return jsonify({"removed": removed}), 200
+
+
 @app.delete("/api/v1/hosts/<mac>")
 def delete_host(mac):
     if not _authorized():
@@ -200,8 +279,7 @@ def delete_host(mac):
     mac = mac.lower().replace("-", ":")
     if not _MAC_RE.match(mac):
         return _err("invalid mac")
-    slug = mac.replace(":", "-")
-    (HOSTS_DIR / f"{slug}.conf").unlink(missing_ok=True)
+    _delete_host_artifacts(mac)
     reg = _load_registry()
     reg.pop(mac, None)
     _save_registry(reg)

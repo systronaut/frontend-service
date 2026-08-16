@@ -188,3 +188,26 @@ label { color: var(--ink); font-weight: 600; }
   .rail-nav { flex-direction: row; flex: 1; }
   .app-main { padding: 16px; }
 }
+
+
+/* ---------- hypervisor list search (screenshot) ---------------------------*/
+.hv-search { display:flex; align-items:center; gap:10px; background:#fff;
+  border:1px solid var(--border); border-radius:999px; padding:8px 16px;
+  box-shadow: var(--shadow-sm); max-width:420px; }
+.hv-search svg { width:18px; height:18px; fill:none; stroke:var(--muted); stroke-width:2;
+  stroke-linecap:round; flex:0 0 auto; }
+.hv-search input { border:0; outline:0; background:transparent; width:100%; color:var(--ink); font-size:.9rem; }
+
+/* ---------- kickstart overview hero (screenshot about-2) -----------------*/
+.kickstart-hero { text-align:center; padding:0 0 1.75rem; }
+.kickstart-brand { display:inline-flex; align-items:center; gap:.55rem; font-weight:800;
+  letter-spacing:.04em; font-size:clamp(1.6rem, 1rem + 2.2vw, 2.2rem); margin:0; color:var(--ink); }
+.kickstart-doc { width:28px; height:28px; color:var(--accent); }
+.kickstart-tagline { color:var(--muted); margin:.35rem 0 0; font-size:1rem; }
+.kickstart-grid { margin-bottom:.5rem; }
+
+/* ---------- dashboard charts (screenshot about-1) ------------------------*/
+.chart-row canvas { width:100% !important; height:180px !important; display:block; }
+.chart-label { font-weight:700; margin-bottom:.5rem; }
+.chart-label-cpu { color:var(--accent); }
+.chart-label-mem { color:#e8a317; }

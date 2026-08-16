@@ -73,3 +73,103 @@ def one_of(value: str, allowed, *, name: str) -> str:
     if value not in allowed:
         raise ValidationError(f"Invalid {name}: {value!r}.")
     return value
+
+
+# Timezone / locale / keyboard — reject shell metacharacters / traversal.
+_TZ_RE = re.compile(r"^[A-Za-z0-9_/+-]{1,64}$")
+_LOCALE_RE = re.compile(r"^[a-z]{2}_[A-Z]{2}(\.UTF-8)?$")
+_KEYBOARD_RE = re.compile(r"^[a-z0-9_-]{1,16}$")
+_USER_RE = re.compile(r"^[a-z_][a-z0-9_-]{0,31}$")
+_DISK_RE = re.compile(r"^(sd[a-z]+|vd[a-z]+|nvme[0-9]+n[0-9]+|xvd[a-z]+)$")
+_SSH_KEY_RE = re.compile(
+    r"^(ssh-(ed25519|rsa|ecdsa)|ecdsa-sha2-nistp(256|384|521)|sk-ssh-ed25519@openssh\.com)"
+    r" [A-Za-z0-9+/=]+( .+)?$"
+)
+
+
+def timezone(value: str) -> str:
+    value = (value or "").strip() or "Etc/UTC"
+    if not _TZ_RE.match(value) or ".." in value:
+        raise ValidationError("Invalid timezone (e.g. Etc/UTC, Europe/Berlin).")
+    return value
+
+
+def locale(value: str) -> str:
+    value = (value or "").strip() or "en_US.UTF-8"
+    if not _LOCALE_RE.match(value):
+        raise ValidationError("Invalid locale (e.g. en_US.UTF-8).")
+    return value
+
+
+def keyboard(value: str) -> str:
+    value = (value or "").strip().lower() or "us"
+    if not _KEYBOARD_RE.match(value):
+        raise ValidationError("Invalid keyboard layout (e.g. us, de).")
+    return value
+
+
+def admin_user(value: str) -> str:
+    value = (value or "").strip().lower() or "systronaut"
+    if not _USER_RE.match(value) or value in {"root", "nobody"}:
+        raise ValidationError("Invalid admin username.")
+    return value
+
+
+def optional_password(value: str, *, minimum: int = 14) -> str:
+    """Optional install password; empty allowed (SSH-key-only). Enforces length when set."""
+    value = value or ""
+    if not value:
+        return ""
+    if len(value) < minimum:
+        raise ValidationError(f"Admin password must be at least {minimum} characters.")
+    if len(value) > 128:
+        raise ValidationError("Admin password is too long.")
+    return value
+
+
+def optional_ssh_pubkey(value: str) -> str:
+    value = (value or "").strip()
+    if not value:
+        return ""
+    if not _SSH_KEY_RE.match(value) or len(value) > 8192:
+        raise ValidationError("Invalid SSH public key (ssh-ed25519 / ssh-rsa / ecdsa).")
+    return value
+
+
+def disk_device(value: str) -> str:
+    value = (value or "").strip().lower() or "sda"
+    if value.startswith("/dev/"):
+        value = value[5:]
+    if not _DISK_RE.match(value):
+        raise ValidationError("Invalid disk device (e.g. sda, vda, nvme0n1).")
+    return value
+
+
+def optional_secret(value: str, *, name: str, maximum: int = 256) -> str:
+    value = (value or "").strip()
+    if len(value) > maximum:
+        raise ValidationError(f"{name} is too long.")
+    if any(c in value for c in "\n\r\0"):
+        raise ValidationError(f"{name} contains invalid characters.")
+    return value
+
+
+# Windows NetBIOS workgroup (1–15); Samba UNC path segment after \\host\.
+_WORKGROUP_RE = re.compile(r"^[A-Za-z0-9_-]{1,15}$")
+_SAMBA_SHARE_RE = re.compile(r"^[A-Za-z0-9_./\\-]{1,128}$")
+
+
+def workgroup(value: str) -> str:
+    value = (value or "").strip() or "WORKGROUP"
+    if not _WORKGROUP_RE.match(value):
+        raise ValidationError("Invalid workgroup (1–15 alphanumeric / _ / -).")
+    return value.upper()
+
+
+def samba_share(value: str) -> str:
+    """Relative share path (e.g. share\\win2022) — no leading backslash."""
+    value = (value or "").strip().strip("\\/") or r"share\win2022"
+    value = value.replace("/", "\\")
+    if not _SAMBA_SHARE_RE.match(value) or ".." in value:
+        raise ValidationError(r"Invalid Samba share path (e.g. share\win2022).")
+    return value

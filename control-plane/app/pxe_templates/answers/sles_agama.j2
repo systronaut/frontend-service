@@ -1,0 +1,108 @@
+{
+  "_comment": "Systronaut Agama JSON — backend Jinja2 (Ansible sles/sles160.json = Vorlage). Profile: {{ security_profile }}. LUKS2 via generate.encryption when passphrase set.",
+  "hostname": {
+    "transient": "{{ hostname }}",
+    "static": "{{ hostname }}"
+  },
+  "root": {
+{% if admin_password_hash %}
+    "hashedPassword": true,
+    "password": "{{ admin_password_hash }}"
+{% else %}
+    "hashedPassword": false,
+    "password": ""
+{% endif %}
+  },
+  "user": {
+    "userName": "{{ admin_user }}",
+    "fullName": "{{ admin_user }}",
+{% if admin_password_hash %}
+    "hashedPassword": true,
+    "password": "{{ admin_password_hash }}"
+{% else %}
+    "hashedPassword": false,
+    "password": ""
+{% endif %}
+{% if ssh_pubkey %}
+    ,"sshPublicKey": "{{ ssh_pubkey }}"
+{% endif %}
+  },
+  "software": {
+    "patterns": [
+{% if harden_minimal_install or package_role == 'minimal' %}
+      "minimal_base"
+{% elif package_role == 'graphical' %}
+      "gnome",
+      "sw_management"
+{% elif package_role == 'dbserver' %}
+      "file_server",
+      "sw_management"
+{% elif package_role == 'appserver' %}
+      "lamp_server",
+      "sw_management"
+{% else %}
+      "sw_management"
+{% endif %}
+    ],
+    "packages": [
+      "openssh",
+      "curl"
+{% if package_role == 'dbserver' and not harden_minimal_install %},
+      "postgresql-server"
+{% endif %}
+{% if package_role == 'appserver' and not harden_minimal_install %},
+      "nginx"
+{% endif %}
+    ]
+  },
+  "product": {
+    "id": "SLES"
+  },
+  "storage": {
+    "drives": [
+      {
+        "search": {
+          "condition": {
+            "name": "/dev/{{ disk_device }}"
+          },
+          "ifNotFound": "error"
+        },
+        "partitions": [
+          {
+            "search": "*",
+            "delete": true
+          },
+{% if harden_disk_encryption and disk_passphrase %}
+          {
+            "generate": {
+              "partitions": "default",
+              "encryption": {
+                "luks2": {
+                  "password": {{ disk_passphrase | tojson }}
+                }
+              }
+            }
+          }
+{% else %}
+          {
+            "generate": "default"
+          }
+{% endif %}
+        ]
+      }
+    ]
+  },
+  "localization": {
+    "language": "{{ locale }}",
+    "keyboard": "{{ keyboard }}",
+    "timezone": "{{ timezone }}"
+  },
+  "scripts": {
+    "post": [
+      {
+        "name": "systronaut-harden",
+        "content": "#!/bin/sh\nset -eu\ncurl -sf '{{ hardening_url }}' -o /tmp/systronaut-hardening.env\ncurl -sf '{{ cis_linux_url }}' -o /tmp/systronaut-cis-linux.sh\nset -a\n. /tmp/systronaut-hardening.env\nset +a\nsh /tmp/systronaut-cis-linux.sh\n"
+      }
+    ]
+  }
+}

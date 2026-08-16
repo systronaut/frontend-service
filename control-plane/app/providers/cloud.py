@@ -4,7 +4,8 @@
 #               group, reads its generated MAC, stages the hardened install via
 #               the shared PXE path, then powers on so it network-boots into the
 #               same NIS2/ISO-27001/CIS install as bare metal.
-#   - ESXi / OpenStack : stubbed adapters (real contract + credential surface).
+#   - ESXi      : REAL (subclass of VsphereProvider; connects to standalone host).
+#   - OpenStack : stubbed adapter (real contract + credential surface; no PXE path).
 #
 # pyVmomi is imported lazily inside methods so the module loads even when the SDK
 # is absent; preflight() reports that clearly instead of crashing the app.

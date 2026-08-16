@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Systronaut autounattend — backend Jinja2 (Ansible windows/ = Vorlage).
+     Profile: {{ security_profile }} · Host: {{ hostname }} -->
+<unattend xmlns="urn:schemas-microsoft-com:unattend">
+<settings pass="windowsPE">
+<component name="Microsoft-Windows-International-Core-WinPE" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<SetupUILanguage><UILanguage>{{ win_locale }}</UILanguage></SetupUILanguage>
+<InputLocale>{{ win_locale }}</InputLocale>
+<SystemLocale>{{ win_locale }}</SystemLocale>
+<UILanguage>{{ win_locale }}</UILanguage>
+<UserLocale>{{ win_locale }}</UserLocale>
+</component>
+<component name="Microsoft-Windows-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<DiskConfiguration>
+<Disk wcm:action="add">
+<CreatePartitions>
+<CreatePartition wcm:action="add"><Order>1</Order><Size>700</Size><Type>Primary</Type></CreatePartition>
+<CreatePartition wcm:action="add"><Order>2</Order><Size>300</Size><Type>EFI</Type></CreatePartition>
+<CreatePartition wcm:action="add"><Order>3</Order><Size>128</Size><Type>MSR</Type></CreatePartition>
+<CreatePartition wcm:action="add"><Order>4</Order><Extend>true</Extend><Type>Primary</Type></CreatePartition>
+</CreatePartitions>
+<ModifyPartitions>
+<ModifyPartition wcm:action="add"><Format>NTFS</Format><Label>Recovery</Label><Order>1</Order><PartitionID>1</PartitionID><TypeID>de94bba4-06d1-4d40-a16a-bfd50179d6ac</TypeID></ModifyPartition>
+<ModifyPartition wcm:action="add"><Format>FAT32</Format><Label>System</Label><Order>2</Order><PartitionID>2</PartitionID></ModifyPartition>
+<ModifyPartition wcm:action="add"><Format>NTFS</Format><Label>Windows</Label><Order>3</Order><PartitionID>4</PartitionID></ModifyPartition>
+</ModifyPartitions>
+<DiskID>0</DiskID>
+<WillWipeDisk>true</WillWipeDisk>
+</Disk>
+</DiskConfiguration>
+<ImageInstall>
+<OSImage>
+<InstallFrom><MetaData wcm:action="add"><Key>/IMAGE/INDEX</Key><Value>2</Value></MetaData></InstallFrom>
+<InstallTo><DiskID>0</DiskID><PartitionID>4</PartitionID></InstallTo>
+</OSImage>
+</ImageInstall>
+<UserData><AcceptEula>true</AcceptEula><FullName>{{ admin_user }}</FullName><Organization>Systronaut</Organization></UserData>
+<UseConfigurationSet>true</UseConfigurationSet>
+</component>
+</settings>
+<settings pass="specialize">
+<component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ComputerName>{{ hostname[:15] }}</ComputerName>
+<TimeZone>{{ win_timezone }}</TimeZone>
+</component>
+<component name="Microsoft-Windows-UnattendedJoin" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Identification>
+<JoinWorkgroup>{{ workgroup or 'WORKGROUP' }}</JoinWorkgroup>
+</Identification>
+</component>
+</settings>
+<settings pass="oobeSystem">
+<component name="Microsoft-Windows-Shell-Setup" processorArchitecture="amd64" publicKeyToken="31bf3856ad364e35" language="neutral" versionScope="nonSxS" xmlns:wcm="http://schemas.microsoft.com/WMIConfig/2002/State" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<FirstLogonCommands>
+<SynchronousCommand wcm:action="add">
+<Order>1</Order>
+<Description>Systronaut CIS/NIS2 harden</Description>
+<CommandLine>powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '{{ answer_url }}/post-harden.ps1' -OutFile $env:TEMP\post-harden.ps1 -UseBasicParsing; &amp; $env:TEMP\post-harden.ps1"</CommandLine>
+</SynchronousCommand>
+</FirstLogonCommands>
+<OOBE>
+<ProtectYourPC>3</ProtectYourPC>
+<SkipUserOOBE>true</SkipUserOOBE>
+<SkipMachineOOBE>true</SkipMachineOOBE>
+</OOBE>
+<UserAccounts>
+<AdministratorPassword>
+{% if admin_password_plain %}
+<Value>{{ admin_password_plain }}</Value>
+<PlainText>true</PlainText>
+{% else %}
+<Value></Value>
+<PlainText>true</PlainText>
+{% endif %}
+</AdministratorPassword>
+{% if admin_user and admin_user != 'Administrator' and admin_password_plain %}
+<LocalAccounts>
+<LocalAccount wcm:action="add">
+<Password><Value>{{ admin_password_plain }}</Value><PlainText>true</PlainText></Password>
+<Description>Systronaut admin</Description>
+<DisplayName>{{ admin_user }}</DisplayName>
+<Group>Administrators</Group>
+<Name>{{ admin_user }}</Name>
+</LocalAccount>
+</LocalAccounts>
+{% endif %}
+</UserAccounts>
+</component>
+</settings>
+</unattend>

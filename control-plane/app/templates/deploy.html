@@ -91,6 +91,63 @@
           </div>
         </div>
       </div>
+
+      <div class="surface p-3 mb-4">
+        <div class="card-header px-2 pb-2 mb-3">3b &middot; Install settings <span class="text-muted-2">(Ansible Vorlage)</span></div>
+        <div class="form-row">
+          <div class="form-group col-md-4"><label>Timezone</label>
+            <input name="timezone" class="form-control" value="Etc/UTC" placeholder="Europe/Berlin"></div>
+          <div class="form-group col-md-4"><label>Locale</label>
+            <input name="locale" class="form-control" value="en_US.UTF-8"></div>
+          <div class="form-group col-md-4"><label>Keyboard</label>
+            <input name="keyboard" class="form-control" value="us" placeholder="us / de"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-4"><label>Admin user</label>
+            <input name="admin_user" class="form-control" value="systronaut" required></div>
+          <div class="form-group col-md-4"><label>Admin password</label>
+            <input name="admin_password" type="password" class="form-control" autocomplete="new-password"
+                   placeholder="min. 14 chars (or use SSH key)"></div>
+          <div class="form-group col-md-4"><label>Disk device</label>
+            <input name="disk_device" class="form-control mono" value="sda" placeholder="sda / nvme0n1"></div>
+        </div>
+        <div class="form-group">
+          <label>SSH public key</label>
+          <input name="ssh_pubkey" class="form-control mono" placeholder="ssh-ed25519 AAAA… comment">
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6"><label>Disk encryption passphrase (LUKS)</label>
+            <input name="disk_passphrase" type="password" class="form-control" autocomplete="new-password"
+                   placeholder="required for NIS2 disk-encryption control"></div>
+          <div class="form-group col-md-6"><label>NTP server</label>
+            <input name="ntp_server" class="form-control" placeholder="ntp.example.com"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6"><label>RHSM org id <span class="text-muted-2">(RHEL)</span></label>
+            <input name="rhsm_org" class="form-control" autocomplete="off"></div>
+          <div class="form-group col-md-6"><label>RHSM activation key</label>
+            <input name="rhsm_activation_key" type="password" class="form-control" autocomplete="off"></div>
+        </div>
+        <div class="form-group">
+          <label>Package role <span class="text-muted-2">(Ansible appserver / dbserver / graphical)</span></label>
+          <select name="package_role" class="form-control">
+            <option value="minimal" selected>Minimal (CIS / NIS2 attack-surface)</option>
+            <option value="appserver">App server (Debian appserver · nginx/httpd)</option>
+            <option value="dbserver">DB server (Debian dbserver · postgresql)</option>
+            <option value="graphical">Graphical (RHEL graphical-server · GNOME)</option>
+          </select>
+          <p class="os-meta mb-0 mt-1">Non-minimal roles record a minimal-install compliance gap on NIS2/ISO profiles.</p>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-6"><label>Windows workgroup <span class="text-muted-2">(JoinWorkgroup)</span></label>
+            <input name="workgroup" class="form-control mono" value="WORKGROUP" maxlength="15"
+                   placeholder="WORKGROUP"></div>
+          <div class="form-group col-md-6"><label>Samba share path <span class="text-muted-2">(after \\PXE-host\)</span></label>
+            <input name="samba_share" class="form-control mono" value="share\win2022"
+                   placeholder="share\win2022"></div>
+        </div>
+        <p class="os-meta mb-0">Password and/or SSH key required. Without a disk passphrase, LUKS is recorded as a compliance gap. Windows fields apply to Win2022 Autounattend / WinPE Samba mount.</p>
+      </div>
     </div>
 
     <!-- right: security profile + submit -->

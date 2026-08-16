@@ -12,6 +12,10 @@
 # selected security profile decides what is enforced. Idempotent; safe to re-run.
 # This is a pragmatic CIS-aligned subset (distro-agnostic). Map to a full CIS
 # Benchmark / OpenSCAP profile for formal certification.
+#
+# HARDEN_DISK_ENCRYPTION is intentionally NOT handled here: Linux FDE (LUKS)
+# must be set at install time via the answer file (kickstart/preseed). Post-
+# install encryption would be a different, disruptive operation.
 set -eu
 
 log() { echo "[cis] $*"; }

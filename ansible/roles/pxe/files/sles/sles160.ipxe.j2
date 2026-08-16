@@ -1,12 +1,16 @@
 #!ipxe
-
+# Ansible Vorlage — per-host Agama JSON when control plane sets have_answer.
+# Fail closed: never fall back to a weak live.password lab default.
 set base-url http://{{ host_ip }}/sles160
-
+{% if have_answer %}
 kernel ${base-url}/boot/x86_64/loader/linux \
-	root=live:${base-url}/LiveOS/squashfs.img inst.install_url=${base-url}/install live.password=111111 \
-	inst.auto=${base-url}/sles160.json
+	root=live:${base-url}/LiveOS/squashfs.img inst.install_url=${base-url}/install \
+	inst.auto={{ answer_url }}/{{ answer_name }}
 initrd ${base-url}/boot/x86_64/loader/initrd
-
 boot
-
-
+{% else %}
+echo Systronaut: missing per-host Agama answer ({{ answer_name | default('autoinstall.json') }}) — aborting
+echo Refusing weak live.password lab fallback. Re-stage host with sles_agama.j2 rendered.
+sleep 10
+shell
+{% endif %}

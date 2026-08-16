@@ -21,7 +21,7 @@ class Provider(str, Enum):
     LIBVIRT = "libvirt"        # KVM/QEMU via libvirt (adapter, real; PXE-staged)
     PROXMOX = "proxmox"        # Proxmox VE (adapter, real; PXE-staged)
     HYPERV = "hyperv"          # Microsoft Hyper-V via WinRM (adapter, real; PXE-staged)
-    ESXI = "esxi"             # standalone ESXi host (adapter, stubbed)
+    ESXI = "esxi"             # standalone ESXi host (real; VsphereProvider subclass)
     OPENSTACK = "openstack"    # OpenStack Nova (adapter, stubbed; image/cloud-init path)
 
 
@@ -68,6 +68,73 @@ class NetworkSpec:
         return NetworkSpec(mode="dhcp", mac=mac, domain=domain, lease=lease)
 
 
+# Package / role sets from Ansible (Debian appserver|dbserver, RHEL graphical, …).
+PACKAGE_ROLES = frozenset({"minimal", "appserver", "dbserver", "graphical"})
+
+
+@dataclass(frozen=True)
+class InstallSettings:
+    """OS answer-file knobs derived from ansible/roles/pxe (must be WebUI-settable)."""
+
+    timezone: str = "Etc/UTC"
+    locale: str = "en_US.UTF-8"
+    keyboard: str = "us"
+    admin_user: str = "systronaut"
+    admin_password: str = ""       # plaintext from form; hashed at render time only
+    ssh_pubkey: str = ""
+    disk_passphrase: str = ""      # LUKS; also accepted via PXE_DISK_ENCRYPTION_PASSPHRASE
+    disk_device: str = "sda"
+    ntp_server: str = ""
+    rhsm_org: str = ""
+    rhsm_activation_key: str = ""
+    package_role: str = "minimal"  # minimal | appserver | dbserver | graphical
+    # Windows (Ansible windows/ Vorlagen): workgroup + UNC share path after \\host\.
+    workgroup: str = "WORKGROUP"
+    samba_share: str = r"share\win2022"
+
+    @staticmethod
+    def from_form(form) -> "InstallSettings":
+        return InstallSettings(
+            timezone=v.timezone(form.get("timezone", "Etc/UTC")),
+            locale=v.locale(form.get("locale", "en_US.UTF-8")),
+            keyboard=v.keyboard(form.get("keyboard", "us")),
+            admin_user=v.admin_user(form.get("admin_user", "systronaut")),
+            admin_password=v.optional_password(form.get("admin_password", "")),
+            ssh_pubkey=v.optional_ssh_pubkey(form.get("ssh_pubkey", "")),
+            disk_passphrase=v.optional_secret(
+                form.get("disk_passphrase", ""), name="disk_passphrase", maximum=128),
+            disk_device=v.disk_device(form.get("disk_device", "sda")),
+            ntp_server=v.optional_secret(
+                form.get("ntp_server", ""), name="ntp_server", maximum=253),
+            rhsm_org=v.optional_secret(form.get("rhsm_org", ""), name="rhsm_org"),
+            rhsm_activation_key=v.optional_secret(
+                form.get("rhsm_activation_key", ""), name="rhsm_activation_key"),
+            package_role=v.one_of(
+                form.get("package_role", "minimal"), PACKAGE_ROLES, name="package_role"),
+            workgroup=v.workgroup(form.get("workgroup", "WORKGROUP")),
+            samba_share=v.samba_share(form.get("samba_share", r"share\win2022")),
+        )
+
+    def public_dict(self) -> dict:
+        """Safe for API/UI — secrets redacted."""
+        return {
+            "timezone": self.timezone,
+            "locale": self.locale,
+            "keyboard": self.keyboard,
+            "admin_user": self.admin_user,
+            "admin_password_set": bool(self.admin_password),
+            "ssh_pubkey_set": bool(self.ssh_pubkey),
+            "disk_passphrase_set": bool(self.disk_passphrase),
+            "disk_device": self.disk_device,
+            "ntp_server": self.ntp_server,
+            "rhsm_org_set": bool(self.rhsm_org),
+            "rhsm_activation_key_set": bool(self.rhsm_activation_key),
+            "package_role": self.package_role,
+            "workgroup": self.workgroup,
+            "samba_share": self.samba_share,
+        }
+
+
 @dataclass(frozen=True)
 class DeploymentSpec:
     """Validated deployment intent. Construction implies the inputs are clean."""
@@ -77,6 +144,7 @@ class DeploymentSpec:
     provider: Provider
     security_profile: str
     network: NetworkSpec
+    install: InstallSettings = field(default_factory=InstallSettings)
     cpu: int = 2
     memory_mb: int = 4096
     disk_gb: int = 40
@@ -91,15 +159,20 @@ class DeploymentSpec:
         profile = v.one_of(form.get("security_profile", security.DEFAULT_PROFILE),
                            {p.name for p in security.all_profiles()}, name="security_profile")
         net = NetworkSpec.from_form(form)
+        install = InstallSettings.from_form(form)
         # PXE pins the install to a NIC, so a MAC is mandatory there.
         if provider == Provider.PXE and not net.mac:
             raise v.ValidationError("A MAC address is required for PXE deployments.")
+        if not install.admin_password and not install.ssh_pubkey:
+            raise v.ValidationError(
+                "Provide an admin password and/or an SSH public key for the install.")
         return DeploymentSpec(
             hostname=v.hostname(form.get("hostname")),
             os_key=os_key,
             provider=provider,
             security_profile=profile,
             network=net,
+            install=install,
             cpu=v.positive_int(form.get("cpu", 2), name="cpu", minimum=1, maximum=128),
             memory_mb=v.positive_int(form.get("memory_mb", 4096), name="memory_mb",
                                      minimum=512, maximum=1048576),
@@ -113,7 +186,11 @@ class DeploymentSpec:
         return catalog.get_image(self.os_key)
 
     def compliance(self) -> security.ComplianceResult:
-        return security.evaluate(self.security_profile, self.image)
+        return security.evaluate(
+            self.security_profile, self.image,
+            disk_passphrase=self.install.disk_passphrase,
+            package_role=self.install.package_role,
+        )
 
 
 @dataclass
@@ -155,5 +232,6 @@ class Deployment:
                 "disk_gb": self.spec.disk_gb,
                 "requested_by": self.spec.requested_by,
                 "network": asdict(self.spec.network),
+                "install": self.spec.install.public_dict(),
             },
         }
