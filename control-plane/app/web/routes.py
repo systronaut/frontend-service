@@ -9,7 +9,8 @@ import os
 from ..auth import authenticate, login_required, current_actor, ROLE_ADMIN
 from ..models import DeploymentSpec
 from ..validators import ValidationError
-from .. import catalog, security, providers, answer_files, crypto, hypervisors
+from .. import (catalog, security, providers, answer_files, crypto, hypervisors,
+                templating)
 
 web_bp = Blueprint("web", __name__)
 
@@ -116,6 +117,60 @@ def deployment_destroy(dep_id):
     current_app.deploy_service.destroy(dep, current_actor())
     flash(f"Deployment {dep_id} destroyed.", "warning")
     return redirect(url_for("web.deployments"))
+
+
+#
+# Config generator -- der Ablauf der ersten Systronaut-Version (osaas):
+#   OS-Auswahl  ->  Eingabemaske  ->  fertige Answer-Datei zum Kopieren.
+# Rein rendernd: erzeugt dieselben Artefakte wie ein Deployment, legt aber
+# nichts an und spricht keinen Hypervisor an.
+@web_bp.get("/generate")
+@login_required()
+def generate_index():
+    return render_template("generate.html",
+                           images=catalog.all_images(),
+                           role=session.get("role"))
+
+
+@web_bp.get("/generate/<os_key>")
+@login_required()
+def generate_form(os_key):
+    image = catalog.get_image(os_key)
+    if image is None:
+        abort(404)
+    return render_template("generate_form.html",
+                           image=image,
+                           profiles=security.all_profiles(),
+                           default_profile=security.DEFAULT_PROFILE,
+                           role=session.get("role"))
+
+
+@web_bp.post("/generate/<os_key>")
+@login_required()
+def generate_submit(os_key):
+    image = catalog.get_image(os_key)
+    if image is None:
+        abort(404)
+    # from_form erwartet os_key im Formular; der Pfad ist die Wahrheit.
+    form = request.form.copy()
+    form["os_key"] = os_key
+    form.setdefault("provider", "pxe")
+    try:
+        spec = DeploymentSpec.from_form(form, requested_by=current_actor())
+    except ValidationError as exc:
+        flash(str(exc), "danger")
+        return redirect(url_for("web.generate_form", os_key=os_key))
+
+    compliance = security.evaluate(
+        spec.security_profile, image,
+        disk_passphrase=spec.install.disk_passphrase,
+        package_role=spec.install.package_role,
+    )
+    artifacts = templating.render_host_artifacts(
+        spec, compliance, templating.host_ip_default())
+    return render_template("generate_output.html",
+                           image=image, spec=spec, compliance=compliance,
+                           artifacts=artifacts, role=session.get("role"))
 
 
 @web_bp.get("/templates")

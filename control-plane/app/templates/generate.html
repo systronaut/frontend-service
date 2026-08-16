@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Config generator{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3 class="mb-0">Config generator</h3>
+    <p class="text-muted-2 mb-0">&gt;&gt; preseed / kickstart / autoinstall / autounattend</p>
+  </div>
+  <a href="{{ url_for('web.deploy_form') }}" class="text-muted-2">Deploy instead &rarr;</a>
+</div>
+
+<div class="surface p-3 mb-4">
+  <div class="card-header px-2 pb-2 mb-3">Pick an operating system</div>
+  <div class="os-grid">
+    {% for img in images %}
+    <a class="os-tile os-tile-link" href="{{ url_for('web.generate_form', os_key=img.key) }}">
+      <div class="os-tile-body">
+        <div class="os-fam">{{ img.family }}</div>
+        <div class="os-name">{{ img.label }}</div>
+        <div class="os-meta">{{ img.distro }} &middot; {{ img.version }} &middot; {{ img.firmware|upper }}</div>
+        {% if img.notes %}<div class="os-meta mt-1">{{ img.notes }}</div>{% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+
+<p class="text-muted-2 mb-0">
+  Generates the answer file only &mdash; nothing is deployed, no hypervisor is contacted.
+  The same renderer the deploy flow uses, so what you see here is what a host would receive.
+</p>
+{% endblock %}

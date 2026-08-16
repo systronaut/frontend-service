@@ -1,0 +1,197 @@
+{% extends 'base.html' %}
+{% block title %}Generate · {{ image.label }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3 class="mb-0">{{ image.label }}</h3>
+    <p class="text-muted-2 mb-0">{{ image.distro }} &middot; {{ image.version }} &middot; {{ image.answer_template }}</p>
+  </div>
+  <a href="{{ url_for('web.generate_index') }}" class="text-muted-2">&larr; Other OS</a>
+</div>
+
+{% if image.notes %}<div class="alert alert-info">{{ image.notes }}</div>{% endif %}
+
+<form method="post" action="{{ url_for('web.generate_submit', os_key=image.key) }}">
+  <div class="row">
+    <div class="col-lg-8">
+
+      <div class="surface p-3 mb-4">
+        <div class="card-header px-2 pb-2 mb-3">1 &middot; Host</div>
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Hostname</label>
+            <input name="hostname" class="form-control" value="host01" required>
+          </div>
+          <div class="form-group col-md-6">
+            <label>MAC address</label>
+            <input name="mac" class="form-control mono" placeholder="aa:bb:cc:dd:ee:ff" required>
+            <small class="text-muted-2">Pins the install to a NIC &mdash; required for PXE.</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="surface p-3 mb-4">
+        <div class="card-header px-2 pb-2 mb-3">2 &middot; Network</div>
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label>Mode</label>
+            <select name="net_mode" class="form-control" id="net-mode">
+              <option value="dhcp">DHCP</option>
+              <option value="static">Static</option>
+            </select>
+          </div>
+          <div class="form-group col-md-4">
+            <label>Domain</label>
+            <input name="domain" class="form-control" placeholder="lan.local">
+          </div>
+          <div class="form-group col-md-4">
+            <label>Lease</label>
+            <input name="lease" class="form-control" value="12h">
+          </div>
+        </div>
+        <div class="form-row" id="static-fields" hidden>
+          <div class="form-group col-md-3">
+            <label>IP</label><input name="ip" class="form-control mono">
+          </div>
+          <div class="form-group col-md-3">
+            <label>Netmask</label><input name="netmask" class="form-control mono" value="255.255.255.0">
+          </div>
+          <div class="form-group col-md-3">
+            <label>Gateway</label><input name="gateway" class="form-control mono">
+          </div>
+          <div class="form-group col-md-3">
+            <label>DNS</label><input name="dns" class="form-control mono">
+          </div>
+        </div>
+      </div>
+
+      <div class="surface p-3 mb-4">
+        <div class="card-header px-2 pb-2 mb-3">3 &middot; Install</div>
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label>Locale</label>
+            <select name="locale" class="form-control">
+              <option value="en_US.UTF-8">en_US.UTF-8</option>
+              <option value="de_DE.UTF-8">de_DE.UTF-8</option>
+            </select>
+          </div>
+          <div class="form-group col-md-4">
+            <label>Keyboard</label>
+            <select name="keyboard" class="form-control">
+              <option value="us">us</option>
+              <option value="de">de</option>
+            </select>
+          </div>
+          <div class="form-group col-md-4">
+            <label>Timezone</label>
+            <input name="timezone" class="form-control" value="Etc/UTC">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label>Admin user</label>
+            <input name="admin_user" class="form-control" value="systronaut">
+          </div>
+          <div class="form-group col-md-4">
+            <label>Admin password</label>
+            <input name="admin_password" type="password" class="form-control" minlength="14">
+            <small class="text-muted-2">Min. 14 characters. Hashed at render time, never stored.</small>
+          </div>
+          <div class="form-group col-md-4">
+            <label>Disk device</label>
+            <input name="disk_device" class="form-control mono" value="sda">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>SSH public key</label>
+          <textarea name="ssh_pubkey" class="form-control mono" rows="2" placeholder="ssh-ed25519 AAAA…"></textarea>
+          <small class="text-muted-2">Password and/or SSH key &mdash; at least one is required.</small>
+        </div>
+        {% if image.family == 'linux' %}
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Package role</label>
+            <select name="package_role" class="form-control">
+              <option value="minimal">minimal</option>
+              <option value="appserver">appserver</option>
+              <option value="dbserver">dbserver</option>
+              <option value="graphical">graphical</option>
+            </select>
+          </div>
+          <div class="form-group col-md-6">
+            <label>NTP server</label>
+            <input name="ntp_server" class="form-control" placeholder="pool.ntp.org">
+          </div>
+        </div>
+        {% endif %}
+        {% if image.distro == 'rhel' %}
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>RHSM organisation</label><input name="rhsm_org" class="form-control">
+          </div>
+          <div class="form-group col-md-6">
+            <label>RHSM activation key</label><input name="rhsm_activation_key" class="form-control">
+          </div>
+        </div>
+        {% endif %}
+        {% if image.family == 'windows' %}
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label>Workgroup</label><input name="workgroup" class="form-control" value="WORKGROUP">
+          </div>
+          <div class="form-group col-md-6">
+            <label>Samba share</label><input name="samba_share" class="form-control mono" value="share\win2022">
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="surface p-3 mb-4">
+        <div class="card-header px-2 pb-2 mb-3">Security profile</div>
+        {% for p in profiles %}
+        <label class="d-block mb-2">
+          <input type="radio" name="security_profile" value="{{ p.name }}"
+                 {{ 'checked' if p.name == default_profile }}>
+          <strong>{{ p.name }}</strong>
+          <div class="os-meta">{{ p.standards|join(', ') }}</div>
+        </label>
+        {% endfor %}
+        {% if image.supports_disk_encryption %}
+        <div class="form-group mt-3 mb-0">
+          <label>Disk passphrase (LUKS)</label>
+          <input name="disk_passphrase" type="password" class="form-control">
+          <small class="text-muted-2">Empty &rarr; generated when the profile demands encryption.</small>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="surface p-3 mb-4">
+        <div class="card-header px-2 pb-2 mb-3">Sizing</div>
+        <div class="form-row">
+          <div class="form-group col-4"><label>vCPU</label><input name="cpu" class="form-control" value="2"></div>
+          <div class="form-group col-4"><label>RAM MB</label><input name="memory_mb" class="form-control" value="4096"></div>
+          <div class="form-group col-4"><label>Disk GB</label><input name="disk_gb" class="form-control" value="40"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" type="submit">Generate config</button>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block script %}
+<script>
+  // Static-Felder nur zeigen, wenn sie auch gebraucht werden.
+  (function () {
+    var mode = document.getElementById('net-mode');
+    var box = document.getElementById('static-fields');
+    if (!mode || !box) return;
+    var sync = function () { box.hidden = mode.value !== 'static'; };
+    mode.addEventListener('change', sync);
+    sync();
+  })();
+</script>
+{% endblock %}

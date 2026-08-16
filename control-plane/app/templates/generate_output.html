@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Config · {{ spec.hostname }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h3 class="mb-0">{{ spec.hostname }}</h3>
+    <p class="text-muted-2 mb-0">{{ image.label }} &middot; profile {{ compliance.profile }}</p>
+  </div>
+  <div>
+    <a href="{{ url_for('web.generate_form', os_key=image.key) }}" class="btn btn-secondary btn-sm">&larr; Change inputs</a>
+    <a href="{{ url_for('web.deploy_form', os=image.key) }}" class="btn btn-primary btn-sm">Deploy this &rarr;</a>
+  </div>
+</div>
+
+{% if compliance.gaps %}
+<div class="alert alert-warning">
+  <strong>{{ compliance.gaps|length }} control(s) not enforceable on this image:</strong>
+  <ul class="mb-0 mt-1">
+    {% for control, why in compliance.gaps %}<li>{{ control.name }} &mdash; {{ why }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<div class="row">
+  <div class="col-lg-3">
+    <div class="surface p-3 mb-4">
+      <div class="card-header px-1 pb-1 mb-2">Artifacts</div>
+      {% for name in artifacts %}
+      <a class="af-file d-block" href="#file-{{ loop.index }}">
+        <span class="af-kind">{{ loop.index }}</span> {{ name }}
+      </a>
+      {% endfor %}
+    </div>
+    <div class="surface p-3 mb-4">
+      <div class="card-header px-1 pb-1 mb-2">Applied</div>
+      {% for control in compliance.applied %}
+        <div><span class="std-chip">{{ control.mechanism }}</span></div>
+      {% else %}
+        <p class="text-muted-2 mb-0">baseline only</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="col-lg-9">
+    {% for name, content in artifacts.items() %}
+    <div class="surface p-3 mb-4" id="file-{{ loop.index }}">
+      <div class="card-header px-1 pb-1 mb-2 d-flex justify-content-between align-items-center">
+        <span class="mono">{{ name }}</span>
+        <span>
+          <span class="pill pill-muted">{{ content|length }} B</span>
+          <button type="button" class="btn btn-secondary btn-sm ml-2 js-copy"
+                  data-target="src-{{ loop.index }}">Copy</button>
+        </span>
+      </div>
+      <pre class="mono af-viewer mb-0" id="src-{{ loop.index }}">{{ content }}</pre>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+  document.querySelectorAll('.js-copy').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var el = document.getElementById(btn.dataset.target);
+      if (!el) return;
+      navigator.clipboard.writeText(el.textContent).then(function () {
+        var old = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(function () { btn.textContent = old; }, 1200);
+      });
+    });
+  });
+</script>
+{% endblock %}
